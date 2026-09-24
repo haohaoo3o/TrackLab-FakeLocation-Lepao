@@ -1,0 +1,78 @@
+# Gradle and Android build output
+.gradle/
+**/build/
+.externalNativeBuild/
+.cxx/
+captures/
+
+# IDE and operating-system metadata
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local Android and environment configuration
+local.properties
+!local.properties.example
+.env
+.env.*
+!.env.example
+
+# Secrets, signing material, and private keys
+.secrets/
+**/.secrets/
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.der
+*.cer
+*.crt
+*.asc
+*.ppk
+*.gpg
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+keystore.properties
+secrets.properties
+
+# Logs, diagnostics, and temporary files
+*.log
+logs/
+**/logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# 本地自动化元数据
+.zcode/
+**/.zcode/
+
+# Distribution output
+dist/
+**/dist/
+
+# Screenshots and screen recordings
+screenshots/
+**/screenshots/
+recordings/
+**/recordings/
+screenshot-*.png
+screenshot_*.png
+Screenshot_*.png
+screenrecord-*.mp4
+screenrecord_*.mp4
+Screen_Recording*
+*.mp4
+*.mov
+*.webm
+*.mkv
+
+# Keep the Gradle wrapper binary in source control
+!gradle/wrapper/gradle-wrapper.jar

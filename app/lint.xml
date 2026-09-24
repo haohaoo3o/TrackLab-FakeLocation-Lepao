@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 双语资源校验（文案键表）：键集相等由 StringsSyncTest 静态保障，
+   lint 侧忽略 MissingTranslation/ExtraTranslation，避免双语资源在 lintDebug 上误伤。 -->
+<lint>
+  <issue id="MissingTranslation" severity="ignore" />
+  <issue id="ExtraTranslation" severity="ignore" />
+</lint>

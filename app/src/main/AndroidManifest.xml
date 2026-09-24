@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 组件与权限：application android:name=".TrackLabApp"、
+     MainActivity android:exported="true"。不做任何对其他应用的隐藏或 Hook。-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 定位（双出口：应用内地图回放 + LocationManager 测试提供者） -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- 模拟位置测试提供者（需在开发者选项中人为选中本应用，CONTRACTS §6）。
+         tools:ignore：MockLocation 规则面向普通应用误用；本应用按需求即测试/模拟定位工具，
+         双出口（LocationManager 测试提供者）要求 release 变体同样声明（真机验收安装 release APK），
+         故不采用 debug-only 源集方案。行级抑制。 -->
+    <uses-permission
+        android:name="android.permission.ACCESS_MOCK_LOCATION"
+        tools:ignore="MockLocation,ProtectedPermissions" />
+    <!-- 常驻通知（API 33+ 运行时申请，docs/permissions-android13-miui.md） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- 悬浮窗控制（SYSTEM_ALERT_WINDOW 手工授予） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 在线底图 / 连接状态场景 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".TrackLabApp"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.TrackLab">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 回放前台服务（foregroundServiceType=location，契约见 CONTRACTS §7.3） -->
+        <service
+            android:name=".service.PlaybackForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- 高德 Key 注入链路终点（manifestPlaceholders["AMAP_API_KEY"]）；留空=NEEDS_KEY 态 -->
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="${AMAP_API_KEY}" />
+
+    </application>
+
+</manifest>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基础主题（AppCompat DayNight；不引入 Material/Compose 依赖，见 docs/CONTRACTS.md §1） -->
+    <style name="Theme.TrackLab" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">#1565C0</item>
+        <item name="colorPrimaryDark">#0D47A1</item>
+        <item name="colorAccent">#FF6F00</item>
+    </style>
+</resources>

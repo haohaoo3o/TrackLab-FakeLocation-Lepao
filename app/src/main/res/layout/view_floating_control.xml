@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗控制条（HUD：暂停/继续/停止）。ID 见本文件；
+     几何计算归 ui/overlay/OverlayGeometry（OverlayGeometryTest 断言不变量）。-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#CC263238"
+    android:orientation="horizontal"
+    android:padding="8dp">
+
+    <!-- 当前圈数/距离/配速/步频（回放指标同源；overlay_metrics_format）。按住此区可拖动整窗。-->
+    <TextView
+        android:id="@+id/txt_overlay_metrics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="8dp"
+        android:minWidth="96dp"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/btn_overlay_pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/cd_overlay_pause"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:text="@string/action_pause" />
+
+    <Button
+        android:id="@+id/btn_overlay_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@string/cd_overlay_stop"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:text="@string/action_stop" />
+
+</LinearLayout>

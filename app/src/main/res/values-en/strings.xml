@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Key set MUST equal values/strings.xml (StringsSyncTest, docs/CONTRACTS.md §10).
+     Compliance strings keep the "测试" marker in every locale so that the check
+     (notification_title contains "测试") is locale-independent. -->
+<resources>
+    <string name="app_name">TrackLab</string>
+
+    <!-- Compliance strings (keep the "测试" marker in all locales) -->
+    <string name="test_mode_badge">TEST/Mock Location (测试/模拟定位中)</string>
+    <string name="notification_title">TEST/Mock Location (测试/模拟定位中)</string>
+    <string name="notification_text">Trajectory playback active (测试/模拟定位)</string>
+    <string name="notification_channel_name">TrackLab Playback Service</string>
+
+    <!-- NEEDS_KEY prompt (build succeeds without a key; prompt shown in-app) -->
+    <string name="error_amap_key_missing">AMap API Key (AMAP_API_KEY) is not configured; the online base map is unavailable. Set it in local.properties and rebuild.</string>
+
+    <!-- Test-trajectory disclaimer (persistent; never controls other apps) -->
+    <string name="test_disclaimer">Test trajectory (测试轨迹): for this app\'s map/trajectory and mock-location testing only; it never controls other apps.</string>
+
+    <!-- Privacy compliance dialog -->
+    <string name="privacy_dialog_title">Privacy Policy</string>
+    <string name="privacy_dialog_message">Please read and accept the privacy policy before using AMap services. After consent the map SDK is initialized in compliance order. This app is a test/mock-location tool and neither hides nor hooks any other app.</string>
+    <string name="privacy_dialog_agree">Agree &amp; Continue</string>
+    <string name="privacy_dialog_deny">Decline</string>
+    <string name="privacy_dialog_view_policy">View Privacy Policy</string>
+
+    <!-- Main controls -->
+    <string name="action_start">Start</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_stop">Stop</string>
+
+    <!-- Overlay content descriptions -->
+    <string name="cd_overlay_pause">Pause playback</string>
+    <string name="cd_overlay_resume">Resume playback</string>
+    <string name="cd_overlay_stop">Stop playback</string>
+
+    <!-- Playback: current lap / distance / pace / cadence (HUD + notification + main UI; preformatted) -->
+    <string name="overlay_metrics_format">Lap %1$d/%2$d · %3$s km · %4$s /km · %5$s spm (测试/模拟定位)</string>
+    <string name="playback_restored_paused">Last test playback progress safely restored (paused; never auto-resumes) (测试/模拟定位)</string>
+    <string name="playback_completed_notice">Test playback completed (测试/模拟定位)</string>
+
+    <!-- Connectivity scenario picker (this app\'s UI/business tests only; never touches the system) -->
+    <string name="connectivity_label">Connectivity scenario (this app\'s UI/business tests only; no system or other-app impact)</string>
+    <string name="connectivity_default">Default</string>
+    <string name="connectivity_cellular">Cellular</string>
+    <string name="connectivity_wifi">Wi-Fi</string>
+    <string name="connectivity_offline">Offline</string>
+
+    <!-- Permission / mock-provider guidance -->
+    <string name="permission_guide_message">Required permissions (location/notification) are missing; mock location cannot start. Grant them in system settings and retry.</string>
+    <string name="mock_location_guide">In Developer options → Select mock location app, choose TrackLab and retry.</string>
+
+    <!-- MapEditViewModel validation messages (the interval item is not configurable) -->
+    <string name="error_invalid_p_base">Base pace p_base must be an integer in 180–660 (s/km)</string>
+    <string name="error_invalid_laps">Laps must be an integer in 1–100</string>
+    <string name="error_invalid_seed">seed must be a decimal integer (long)</string>
+
+    <!-- Fixed six-point names (p0 top, p1 upper-left, p2 lower-left, p3 bottom, p4 lower-right, p5 upper-right) -->
+    <string name="point_name_p0">Top</string>
+    <string name="point_name_p1">Upper-left tangent</string>
+    <string name="point_name_p2">Lower-left tangent</string>
+    <string name="point_name_p3">Bottom</string>
+    <string name="point_name_p4">Lower-right tangent</string>
+    <string name="point_name_p5">Upper-right tangent</string>
+    <string name="point_title_format">p%1$d %2$s</string>
+
+    <!-- Map status line -->
+    <string name="map_hint_next_point">Tap or long-press the map for point %1$d/6: %2$s</string>
+    <string name="map_hint_all_collected">All 6 points collected; showing fit preview and boundary corridor</string>
+    <string name="map_hint_point_limit">Already 6 points; use Undo or Reset first</string>
+    <string name="map_hint_preview_failed">Fit rejected: %1$s</string>
+    <string name="map_hint_playback_requested">Test trajectory generated; test playback entry triggered (测试/模拟定位中)</string>
+
+    <!-- Parameter area (pace/cadence ranges are model-fixed bounds, sourced from MotionContracts) -->
+    <string name="range_info">Pace %1$d–%2$d s/km (3:00–11:00 min/km) | Cadence %3$d–%4$d spm (model-fixed range)</string>
+    <string name="label_p_base">p_base (s/km)</string>
+    <string name="label_seed">seed</string>
+    <string name="label_laps">Laps (1–100)</string>
+
+    <!-- Undo / reset / export -->
+    <string name="action_undo">Undo</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_export_gpx">Export GPX</string>
+    <string name="action_export_geojson">Export GeoJSON</string>
+    <string name="export_success">Exported: %1$s</string>
+    <string name="export_success_toast">Test trajectory exported (测试/模拟数据)</string>
+    <string name="error_export_failed">Export failed: %1$s</string>
+    <string name="error_no_track">Collect all 6 points in fixed order and fit the track first</string>
+    <string name="error_state_restore">State restore failed; defaults kept: %1$s</string>
+</resources>

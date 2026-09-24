@@ -1,0 +1,14 @@
+TrackLab
+Copyright 2026 TrackLab contributors
+
+This product includes software developed by the TrackLab contributors and is
+licensed under the Apache License, Version 2.0.
+
+This distribution may depend on third-party software whose copyright and
+license terms remain with their respective owners. See
+THIRD_PARTY_NOTICES.md for component-specific notices.
+
+AMap (高德) SDK components are proprietary software supplied under AMap's
+applicable terms. They are not relicensed under the Apache License, Version
+2.0, by this project. AMap and related names and marks belong to their
+respective owners.

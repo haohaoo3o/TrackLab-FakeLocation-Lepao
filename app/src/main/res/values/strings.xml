@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 键集必须与 values-en/strings.xml 相等（StringsSyncTest 常驻断言、
+     lint.xml 忽略 MissingTranslation/ExtraTranslation——双保险）。
+     合规常驻文案（test_mode_badge / notification_title / notification_text）在任何语言下保留“测试”字样
+（断言 locale 无关）。-->
+<resources>
+    <string name="app_name">TrackLab</string>
+
+    <!-- 合规常驻文案（保留“测试”字样，全部 locale） -->
+    <string name="test_mode_badge">测试/模拟定位中</string>
+    <string name="notification_title">测试/模拟定位中</string>
+    <string name="notification_text">轨迹回放进行中（测试/模拟定位）</string>
+    <string name="notification_channel_name">TrackLab 回放服务</string>
+
+    <!-- NEEDS_KEY 配置提示（Key 缺失时允许编译并在应用内显示） -->
+    <string name="error_amap_key_missing">未配置高德地图 API Key（AMAP_API_KEY），在线底图不可用。请在 local.properties 中设置后重新构建。</string>
+
+    <!-- 测试轨迹声明（常驻；不自动控制其他应用） -->
+    <string name="test_disclaimer">测试轨迹：仅供本应用地图/轨迹算法与模拟定位测试（测试轨迹），不会自动控制其他应用。</string>
+
+    <!-- 隐私合规对话框（§5） -->
+    <string name="privacy_dialog_title">隐私政策</string>
+    <string name="privacy_dialog_message">在使用高德地图服务前，请先阅读并同意隐私政策。同意后应用将按合规时序初始化地图 SDK。本应用为测试/模拟定位工具，不隐藏、不 Hook 任何其他应用。</string>
+    <string name="privacy_dialog_agree">同意并继续</string>
+    <string name="privacy_dialog_deny">不同意</string>
+    <string name="privacy_dialog_view_policy">查看隐私政策</string>
+
+    <!-- 主控三键 -->
+    <string name="action_start">开始</string>
+    <string name="action_pause">暂停</string>
+    <string name="action_resume">继续</string>
+    <string name="action_stop">停止</string>
+
+    <!-- 悬浮窗控件无障碍描述 -->
+    <string name="cd_overlay_pause">暂停回放</string>
+    <string name="cd_overlay_resume">继续回放</string>
+    <string name="cd_overlay_stop">停止回放</string>
+
+    <!-- 回放：当前圈数/距离/配速/步频显示（HUD/通知/主界面同源；数值由 PlaybackMetricsFormat 预格式化） -->
+    <string name="overlay_metrics_format">第 %1$d/%2$d 圈 · %3$s km · %4$s /km · %5$s spm（测试/模拟定位）</string>
+    <string name="playback_restored_paused">已安全恢复上次测试回放进度（已暂停，不自动续跑）（测试/模拟定位）</string>
+    <string name="playback_completed_notice">测试回放完成（测试/模拟定位）</string>
+
+    <!-- 连接场景选择（仅供本应用 UI/业务测试；不改写系统状态、不影响其他应用） -->
+    <string name="connectivity_label">连接场景（仅本应用 UI/业务测试，不影响系统与其他应用）</string>
+    <string name="connectivity_default">默认</string>
+    <string name="connectivity_cellular">蜂窝</string>
+    <string name="connectivity_wifi">Wi-Fi</string>
+    <string name="connectivity_offline">离线</string>
+
+    <!-- 权限 / 模拟定位人为前置的显式引导（§6） -->
+    <string name="permission_guide_message">缺少必要权限（定位/通知），无法开始模拟定位。请在系统设置中授予后重试。</string>
+    <string name="mock_location_guide">请在「开发者选项 → 选择模拟位置信息应用」中选择 TrackLab 后重试。</string>
+
+    <!-- MapEditViewModel 输入校验文案（§3；interval 项不可配置） -->
+    <string name="error_invalid_p_base">基准配速 p_base 需为 180~660 的整数（秒/公里）</string>
+    <string name="error_invalid_laps">圈数需为 1~100 的整数</string>
+    <string name="error_invalid_seed">seed 需为十进制整数（long）</string>
+
+    <!-- 六点固定命名（p0 顶部、p1 左上切点、p2 左下切点、p3 底部、p4 右下切点、p5 右上切点） -->
+    <string name="point_name_p0">顶部</string>
+    <string name="point_name_p1">左上切点</string>
+    <string name="point_name_p2">左下切点</string>
+    <string name="point_name_p3">底部</string>
+    <string name="point_name_p4">右下切点</string>
+    <string name="point_name_p5">右上切点</string>
+    <string name="point_title_format">p%1$d %2$s</string>
+
+    <!-- 地图状态行 -->
+    <string name="map_hint_next_point">点击/长按地图采集第 %1$d/6 点：%2$s</string>
+    <string name="map_hint_all_collected">6 个点位已采集，显示拟合预览与边界走廊</string>
+    <string name="map_hint_point_limit">已采集 6 点；继续请先「撤销」或「重置」</string>
+    <string name="map_hint_preview_failed">拟合失败：%1$s</string>
+    <string name="map_hint_playback_requested">测试轨迹已生成，已进入测试回放入口（测试/模拟定位中）</string>
+
+    <!-- 参数区（配速与步频范围为模型固定界，MotionContracts 同源） -->
+    <string name="range_info">配速 %1$d–%2$d s/km（3:00–11:00 min/km）｜步频 %3$d–%4$d spm（模型固定范围）</string>
+    <string name="label_p_base">p_base（s/km）</string>
+    <string name="label_seed">seed</string>
+    <string name="label_laps">圈数（1–100）</string>
+
+    <!-- 撤销/重置/导出 -->
+    <string name="action_undo">撤销</string>
+    <string name="action_reset">重置</string>
+    <string name="action_export_gpx">导出 GPX</string>
+    <string name="action_export_geojson">导出 GeoJSON</string>
+    <string name="export_success">已导出：%1$s</string>
+    <string name="export_success_toast">测试轨迹已导出（测试/模拟数据）</string>
+    <string name="error_export_failed">导出失败：%1$s</string>
+    <string name="error_no_track">请先按固定顺序采集 6 个点位并完成拟合</string>
+    <string name="error_state_restore">状态恢复失败，已用默认值继续：%1$s</string>
+</resources>
