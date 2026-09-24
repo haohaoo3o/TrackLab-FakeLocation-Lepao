@@ -29,15 +29,20 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK 35
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="${SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -x "${SDKMANAGER}" ]]; then
+            SDKMANAGER="${SDK_ROOT}/cmdline-tools/bin/sdkmanager"
+          fi
+          "${SDKMANAGER}" --sdk_root="${SDK_ROOT}" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Create local configuration without a map key
         run: |
-          printf 'sdk.dir=%s\nAMAP_API_KEY=\n' "$ANDROID_SDK_ROOT" > local.properties
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          printf 'sdk.dir=%s\nAMAP_API_KEY=\n' "${SDK_ROOT}" > local.properties
 
       - name: Verify source, lint, and debug build
         run: ./gradlew --no-daemon clean testDebugUnitTest lintDebug assembleDebug
