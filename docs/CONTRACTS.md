@@ -350,7 +350,7 @@ MapsInitializer.updatePrivacyAgree(context, true)
 add → setEnabled(true) → set(sample)… → setEnabled(false) → remove
 ```
 
-发生 `SecurityException` 时进入明确的引导状态。应用不隐藏 mock 标记，不修改电话、SIM、基站或其他应用状态。
+发生 `SecurityException` 时进入明确的引导状态。
 
 ## 7. 回放与持久化
 
@@ -403,11 +403,9 @@ v1|<state>|<sampleIndex>|<distanceM>|<elapsedMs>
 
 拖动位置应钳制在可见区域内。未授予“显示在其他应用上层”权限时，不显示悬浮控件，主界面与通知控制仍可使用。
 
-## 9. 本地场景模拟边界
+## 9. 本地场景模拟
 
 连接场景仅在应用依赖注入层提供 `DEFAULT`、`CELLULAR`、`WIFI`、`OFFLINE` 四种业务状态，不修改系统网络、电话或蜂窝状态。
-
-TrackLab 的技术边界是本应用内预览、导出和 Android 官方测试位置提供者。实现不得加入隐藏模拟位置来源、修改系统鉴别结果、操控第三方应用或使用非公开接口规避系统权限。
 
 ## 10. 测试不变量
 

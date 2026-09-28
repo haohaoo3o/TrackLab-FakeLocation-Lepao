@@ -2,8 +2,6 @@
 
 TrackLab 是一个面向 Android 的开源跑道轨迹生成、地图预览与模拟定位测试工具。它根据六个跑道控制点拟合标准跑道几何，生成具有配速、步频和逐圈扰动的可复现轨迹，并支持应用内回放以及通过 Android 官方测试位置提供者输出模拟位置。
 
-> TrackLab 仅用于开发、测试、教学和研究。模拟位置输出会保留 Android 的 mock 标记，不包含隐藏、绕过或操控其他应用的能力。
-
 [English summary](#english-summary)
 
 ## 功能概览
@@ -64,7 +62,7 @@ AMAP_API_KEY=YOUR_OWN_KEY
 3. 选择 **TrackLab**；
 4. 返回应用并开始回放。
 
-这是 Android 官方支持的测试流程。TrackLab 不隐藏模拟位置标记。Android 13+ 与部分 MIUI 系统的权限说明见 [权限指南](docs/permissions-android13-miui.md)。
+这是 Android 官方支持的测试流程。Android 13+ 与部分 MIUI 系统的权限说明见 [权限指南](docs/permissions-android13-miui.md)。
 
 ## 构建与测试
 
