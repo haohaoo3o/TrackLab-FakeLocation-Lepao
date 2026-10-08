@@ -5,6 +5,7 @@ import io.github.haohaoo3o.tracklab.core.geo.LatLon
 import io.github.haohaoo3o.tracklab.core.geo.MetricResampler
 import io.github.haohaoo3o.tracklab.core.geo.TrackFitter
 import io.github.haohaoo3o.tracklab.core.geo.TrackModel
+import io.github.haohaoo3o.tracklab.core.geo.TrackPreset
 import io.github.haohaoo3o.tracklab.core.model.TrackSample
 import io.github.haohaoo3o.tracklab.core.motion.BoundaryGuard
 import io.github.haohaoo3o.tracklab.core.motion.MotionContracts
@@ -106,6 +107,54 @@ class MapEditViewModel(
     fun resetPoints() {
         current = current.copy(points = emptyList())
     }
+
+    // ---------------------------------------------------------------- 预制跑道 / 整体变换
+
+    /**
+     * 载入预制跑道：六点整体替换当前点位（固定顺序），随后重算拟合并返回预览。
+     * 预制六点恰在残差槽位 ⇒ [TrackFitter] 零残差必过（参数 p_base/laps/seed 保留）。
+     */
+    fun loadPreset(preset: TrackPreset): FitPreview {
+        current = current.copy(points = preset.sixPoints())
+        return tryFit()
+    }
+
+    /**
+     * 拖动微调：替换第 [index] 个点位（WGS-84）。越界索引返回 false（状态不变）。
+     * 微调后由调用方经 [tryFit] 复核残差（超界被拒，不放宽容差）。
+     */
+    fun replacePoint(index: Int, point: LatLon): Boolean {
+        if (index !in current.points.indices) return false
+        current = current.copy(
+            points = current.points.mapIndexed { i, p -> if (i == index) point else p },
+        )
+        return true
+    }
+
+    /**
+     * 对当前六点做**整体变换**（移动/缩放/旋转）：先以拟合模型为基准反推 [TrackPreset]，
+     * 应用 [transform] 后按槽位重生成六点（拟合未就绪或变换退化返回 false，状态不变）。
+     */
+    fun transformTrack(transform: (TrackPreset) -> TrackPreset): Boolean {
+        val model = (tryFit() as? FitPreview.Ready)?.model ?: return false
+        val next = try {
+            transform(TrackPreset.fromModel(TRANSFORMED_PRESET_ID, model))
+        } catch (e: IllegalArgumentException) {
+            return false
+        }
+        current = current.copy(points = next.sixPoints())
+        return true
+    }
+
+    /** 整体西/东移（[dEastM]，东正）。 */
+    fun panTrack(dEastM: Double, dNorthM: Double): Boolean =
+        transformTrack { it.panned(dEastM, dNorthM) }
+
+    /** 整体缩放（[factor]，a/R 同比例）。 */
+    fun scaleTrack(factor: Double): Boolean = transformTrack { it.scaled(factor) }
+
+    /** 整体旋转（[deltaDeg]，正=顺时针）。 */
+    fun rotateTrack(deltaDeg: Double): Boolean = transformTrack { it.rotated(deltaDeg) }
 
     // ---------------------------------------------------------------- 输入校验（可测）
 
@@ -260,5 +309,13 @@ class MapEditViewModel(
 
         /** seed 解析（long 文本）；非法返回 null。*/
         fun parseSeed(text: String): Long? = text.trim().toLongOrNull()
+
+        /** 整体变换的单步移动量（米）/缩放比例/旋转角度（度）——UI 按钮步进。*/
+        const val PAN_STEP_M = 5.0
+        const val SCALE_STEP = 0.05
+        const val ROTATE_STEP_DEG = 5.0
+
+        /** 变换基准的临时 id（仅内部使用；不进入状态快照）。*/
+        private const val TRANSFORMED_PRESET_ID = "transformed"
     }
 }

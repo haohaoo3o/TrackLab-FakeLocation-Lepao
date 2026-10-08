@@ -98,222 +98,389 @@
     </LinearLayout>
 
     <!-- 挂载高德 MapView 的容器；READY 时由 MainActivity 创建 MapView -->
+    <!-- 挂载高德 MapView 的容器；READY 时由 MainActivity 创建 MapView。
+         权重 0.45：与下方控件区（ScrollView 0.55）按比例分配剩余高度，地图不被挤压成条。 -->
     <FrameLayout
         android:id="@+id/map_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="4dp"
-        android:layout_weight="1"
-        android:minHeight="96dp" />
+        android:layout_weight="0.45"
+        android:minHeight="200dp" />
 
-    <!-- 地图状态行：下一点提示 / 拟合结果 / 导出路径 / 回放入口回执 -->
-    <TextView
-        android:id="@+id/txt_map_status"
+    <!-- 控件区（预制跑道/变换/状态行/参数/主控/连接场景）：总高超一屏时可滚动，地图保持占比 -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:padding="2dp"
-        android:textSize="12sp" />
-
-    <!-- 回放模块：当前圈数/距离/配速/步频显示（回放指标同源 HUD/通知；overlay_metrics_format） -->
-    <TextView
-        android:id="@+id/txt_playback_metrics"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <!-- 配速与步频范围展示（模型固定界，MotionContracts 同源） -->
-    <TextView
-        android:id="@+id/txt_range_info"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:textColor="#546E7A"
-        android:textSize="11sp" />
-
-    <!-- 参数行：p_base / seed / 圈数（校验：180–660 整数 / long 文本 / 1–100 整数） -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/edit_p_base"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/label_p_base"
-            android:importantForAutofill="no"
-            android:inputType="number"
-            android:maxLength="4"
-            android:singleLine="true"
-            android:textSize="12sp" />
-
-        <EditText
-            android:id="@+id/edit_seed"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/label_seed"
-            android:importantForAutofill="no"
-            android:inputType="numberSigned"
-            android:maxLength="20"
-            android:singleLine="true"
-            android:textSize="12sp" />
-
-        <EditText
-            android:id="@+id/edit_laps"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/label_laps"
-            android:importantForAutofill="no"
-            android:inputType="number"
-            android:maxLength="3"
-            android:singleLine="true"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <!-- 编辑行：撤销 / 重置 / 导出 GPX / 导出 GeoJSON -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btn_undo"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:padding="4dp"
-            android:text="@string/action_undo"
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/btn_reset"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:padding="4dp"
-            android:text="@string/action_reset"
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/btn_export_gpx"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:padding="4dp"
-            android:text="@string/action_export_gpx"
-            android:textSize="12sp" />
-
-        <Button
-            android:id="@+id/btn_export_geojson"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:padding="4dp"
-            android:text="@string/action_export_geojson"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <!-- 主控三键：isDisplayed + isEnabled + click 无异常 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btn_start"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:text="@string/action_start" />
-
-        <Button
-            android:id="@+id/btn_pause"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:text="@string/action_pause" />
-
-        <Button
-            android:id="@+id/btn_stop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="0dp"
-            android:text="@string/action_stop" />
-    </LinearLayout>
-
-    <!-- 连接场景选择（仅供本应用 UI/业务测试；不改写系统 Telephony/连接状态，不影响其他应用） -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="2dp"
-            android:text="@string/connectivity_label"
-            android:textColor="#546E7A"
-            android:textSize="11sp" />
+        android:layout_height="0dp"
+        android:layout_weight="0.55"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
-            <Button
-                android:id="@+id/btn_conn_default"
-                android:layout_width="0dp"
+            <!-- 预制跑道：一键载入标准 400m 到当前视野中心，随后拖动 Marker 微调 -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="0dp"
-                android:padding="4dp"
-                android:text="@string/connectivity_default"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:text="@string/preset_label"
+                    android:textColor="#455A64"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btn_preset_standard_400"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/preset_standard_400"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- 预制跑道整体变换：移动/缩放/旋转（对当前拟合六点整体生效，适配不同跑道） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:text="@string/track_move"
+                    android:textColor="#455A64"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btn_track_left"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_left"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="←"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_track_up"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_up"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="↑"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_track_down"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_down"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="↓"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btn_track_right"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_right"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="→"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:text="@string/track_scale"
+                    android:textColor="#455A64"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btn_track_scale_down"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_scale_down"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/track_scale_down"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_track_scale_up"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_scale_up"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/track_scale_up"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="4dp"
+                    android:text="@string/track_rotate"
+                    android:textColor="#455A64"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btn_track_rotate_ccw"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_rotate_ccw"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/track_rotate_ccw"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_track_rotate_cw"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:contentDescription="@string/cd_track_rotate_cw"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/track_rotate_cw"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- 地图状态行：下一点提示 / 拟合结果 / 导出路径 / 回放入口回执 -->
+            <TextView
+                android:id="@+id/txt_map_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:padding="2dp"
                 android:textSize="12sp" />
 
-            <Button
-                android:id="@+id/btn_conn_cellular"
-                android:layout_width="0dp"
+            <!-- 回放模块：当前圈数/距离/配速/步频显示（回放指标同源 HUD/通知；overlay_metrics_format） -->
+            <TextView
+                android:id="@+id/txt_playback_metrics"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="0dp"
-                android:padding="4dp"
-                android:text="@string/connectivity_cellular"
-                android:textSize="12sp" />
+                android:padding="2dp"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
-            <Button
-                android:id="@+id/btn_conn_wifi"
-                android:layout_width="0dp"
+            <!-- 配速与步频范围展示（模型固定界，MotionContracts 同源） -->
+            <TextView
+                android:id="@+id/txt_range_info"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="0dp"
-                android:padding="4dp"
-                android:text="@string/connectivity_wifi"
-                android:textSize="12sp" />
+                android:padding="2dp"
+                android:textColor="#546E7A"
+                android:textSize="11sp" />
 
-            <Button
-                android:id="@+id/btn_conn_offline"
-                android:layout_width="0dp"
+            <!-- 参数行：p_base / seed / 圈数（校验：180–660 整数 / long 文本 / 1–100 整数） -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:minHeight="0dp"
-                android:padding="4dp"
-                android:text="@string/connectivity_offline"
-                android:textSize="12sp" />
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/edit_p_base"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/label_p_base"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="4"
+                    android:singleLine="true"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/edit_seed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/label_seed"
+                    android:importantForAutofill="no"
+                    android:inputType="numberSigned"
+                    android:maxLength="20"
+                    android:singleLine="true"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/edit_laps"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/label_laps"
+                    android:importantForAutofill="no"
+                    android:inputType="number"
+                    android:maxLength="3"
+                    android:singleLine="true"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- 编辑行：撤销 / 重置 / 导出 GPX / 导出 GeoJSON -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_undo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/action_undo"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_reset"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/action_reset"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_export_gpx"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/action_export_gpx"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_export_geojson"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:padding="4dp"
+                    android:text="@string/action_export_geojson"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- 主控三键：isDisplayed + isEnabled + click 无异常 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_start"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:text="@string/action_start" />
+
+                <Button
+                    android:id="@+id/btn_pause"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:text="@string/action_pause" />
+
+                <Button
+                    android:id="@+id/btn_stop"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="0dp"
+                    android:text="@string/action_stop" />
+            </LinearLayout>
+
+            <!-- 连接场景选择（仅供本应用 UI/业务测试；不改写系统 Telephony/连接状态，不影响其他应用） -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="2dp"
+                    android:text="@string/connectivity_label"
+                    android:textColor="#546E7A"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_conn_default"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="0dp"
+                        android:padding="4dp"
+                        android:text="@string/connectivity_default"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_conn_cellular"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="0dp"
+                        android:padding="4dp"
+                        android:text="@string/connectivity_cellular"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_conn_wifi"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="0dp"
+                        android:padding="4dp"
+                        android:text="@string/connectivity_wifi"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_conn_offline"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:minHeight="0dp"
+                        android:padding="4dp"
+                        android:text="@string/connectivity_offline"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

@@ -17,7 +17,7 @@ import io.github.haohaoo3o.tracklab.core.geo.CoordTransform
 import io.github.haohaoo3o.tracklab.core.geo.LatLon
 
 /**
- * 高德地图叠加层控制器：编号 Marker（p0..p5）、拟合预览 Polyline（中心线）与
+ * 高德地图叠加层控制器：编号 Marker（p0..p5，**可拖动微调**）、拟合预览 Polyline（中心线）与
  * 边界走廊两侧折线（±W）。**纯 Android/AMap 渲染**，几何一律由 [MapEditViewModel] 算好后传入。
  *
  * 坐标口径（docs/CONTRACTS.md）：入参 WGS-84 → 显示前经 [CoordTransform.wgs84ToGcj02] 转 GCJ-02。
@@ -28,13 +28,18 @@ class MapEditController(private val amap: AMap) {
     private val markers = mutableListOf<Marker>()
     private val polylines = mutableListOf<Polyline>()
 
+    /** Marker → 点位索引（p0..p5；拖动结束回调经 [markerIndex] 定位被拖点）。 */
+    private val markerIndices = mutableListOf<Pair<Marker, Int>>()
+
     /**
      * 渲染点位编号 Marker（[titles] 与 [points] 等长，形如『p0 顶部』）。
-     * 图标为白字编号圆点（p0..p5 按固定顺序语义）。
+     * 图标为白字编号圆点（p0..p5 按固定顺序语义）；**Marker 可拖动**——预制跑道载入后
+     * 用户拖动六点贴合实际跑道，拖动结束由调用方回写 ViewModel（[markerIndex] 取索引）。
      */
     fun renderPoints(points: List<LatLon>, titles: List<String>) {
         markers.forEach { it.remove() }
         markers.clear()
+        markerIndices.clear()
         points.forEachIndexed { index, p ->
             val marker = amap.addMarker(
                 MarkerOptions()
@@ -42,11 +47,18 @@ class MapEditController(private val amap: AMap) {
                     .title(titles.getOrNull(index) ?: "p$index")
                     .icon(BitmapDescriptorFactory.fromBitmap(numberIcon(index)))
                     .anchor(0.5f, 0.5f)
+                    .draggable(true)
                     .zIndex(3f)
             )
-            if (marker != null) markers.add(marker)
+            if (marker != null) {
+                markers.add(marker)
+                markerIndices.add(marker to index)
+            }
         }
     }
+
+    /** [marker] 对应的点位索引（p0..p5）；非本控制器创建的 Marker 返回 null。 */
+    fun markerIndex(marker: Marker): Int? = markerIndices.firstOrNull { it.first === marker }?.second
 
     /**
      * 渲染拟合预览：中心线 Polyline（[centerlineWgs84]）+ 边界走廊两侧折线
@@ -72,6 +84,7 @@ class MapEditController(private val amap: AMap) {
     fun clearOverlays() {
         markers.forEach { it.remove() }
         markers.clear()
+        markerIndices.clear()
         clearPolylines()
     }
 

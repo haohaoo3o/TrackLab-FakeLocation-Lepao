@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -19,6 +20,7 @@ import io.github.haohaoo3o.tracklab.R
 import io.github.haohaoo3o.tracklab.TrackLabApp
 import io.github.haohaoo3o.tracklab.core.model.TrackSample
 import io.github.haohaoo3o.tracklab.core.motion.MotionContracts
+import io.github.haohaoo3o.tracklab.device.LocationFrameSynthesizer
 import io.github.haohaoo3o.tracklab.device.LocationManagerTestLocationSink
 import io.github.haohaoo3o.tracklab.device.TestLocationOutput
 import kotlinx.coroutines.CoroutineScope
@@ -131,6 +133,8 @@ class PlaybackForegroundService : Service() {
         // 与在飞回放步（锁内 emit）互斥后关闭出口，避免 remove/set 交错。
         runCatching { synchronized(this) { output?.stop() } }
         output = null
+        // 统一帧合成器清场（会话锚随服务销毁一并清除；下次会话必须重新 beginSession）。
+        LocationFrameSynthesizer.endSession()
         overlay?.hide()
         overlay = null
         PlaybackSessionStore.clear()
@@ -180,6 +184,11 @@ class PlaybackForegroundService : Service() {
             val totalRunM = session.samples.sumOf { it.speedMps * MotionContracts.DELTA_T_SEC }
             val lapLen = if (session.laps > 0) totalRunM / session.laps else 0.0
 
+            // 位置帧合成器会话锚：墙钟与单调钟在**同一瞬间**采样（此后帧时间/坐标/物理量
+            // 全部由该锚与轨迹样本派生；官方 mock 出口每帧从合成器取帧）。
+            val anchorWallClockMs = System.currentTimeMillis()
+            val anchorElapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
+
             // 输出二：官方测试提供者（SecurityException → 显式引导态，绝不绕过）。
             val out = TestLocationOutput(
                 appContainer.testLocationSink,
@@ -195,6 +204,13 @@ class PlaybackForegroundService : Service() {
                 machine = PlaybackStateMachine()
                 lastSnapshotSampleIndex = 0
                 sessionActive = true
+                // 统一帧合成器装载（三钟同锚；可选精度档位随会话传入）。
+                LocationFrameSynthesizer.beginSession(
+                    seed = session.seed,
+                    anchorWallClockMs = anchorWallClockMs,
+                    anchorElapsedRealtimeNanos = anchorElapsedRealtimeNanos,
+                    accuracyLadderM = session.accuracyLadderM,
+                )
                 output = out
                 out.start()
                 machine.onEvent(PlaybackEvent.START)

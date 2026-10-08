@@ -2,6 +2,7 @@ package io.github.haohaoo3o.tracklab.map
 
 import io.github.haohaoo3o.tracklab.core.geo.LatLon
 import io.github.haohaoo3o.tracklab.core.geo.LocalTangentPlane
+import io.github.haohaoo3o.tracklab.core.geo.TrackPresetLibrary
 import io.github.haohaoo3o.tracklab.core.geo.Vec2
 import io.github.haohaoo3o.tracklab.core.model.TrackSample
 import io.github.haohaoo3o.tracklab.core.motion.BoundaryGuard
@@ -12,6 +13,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -200,6 +202,140 @@ class MapEditViewModelTest {
             "应透传中文原因：" + (fit as MapEditViewModel.FitPreview.Rejected).message,
             fit.message.contains("点序绕向"),
         )
+    }
+
+    // ---------------------------------------------------------------- 预制跑道（载入 / 微调 / 整体变换）
+
+    @Test
+    fun loadPresetReplacesPointsKeepsParamsAndFits() {
+        val vm = newViewModel()
+        vm.applyInputs("400", "7", "42")
+        val preset = TrackPresetLibrary.standard400(ORIGIN)
+
+        val fit = vm.loadPreset(preset)
+
+        // 预制六点零残差 ⇒ Ready；p_base/laps/seed 保留
+        assertTrue("预制应直接拟合成功", fit is MapEditViewModel.FitPreview.Ready)
+        assertEquals(preset.sixPoints(), vm.state.points)
+        assertEquals(400, vm.state.pBaseSecPerKm)
+        assertEquals(7, vm.state.laps)
+        assertEquals(42L, vm.state.seed)
+        val model = (fit as MapEditViewModel.FitPreview.Ready).model
+        assertEquals(preset.straightHalfM, model.a, 1e-6)
+        assertEquals(preset.bendRadiusM, model.r, 1e-6)
+        // 生成链路可用（回放/导出同源）
+        assertNotNull(vm.generateSamples())
+    }
+
+    @Test
+    fun replacePointNudgeStaysWithinTolerance() {
+        val vm = newViewModel()
+        val preset = TrackPresetLibrary.standard400(ORIGIN)
+        vm.loadPreset(preset)
+
+        // p0 沿法向拖离槽位 0.4m（< tol=2.0m）⇒ 仍 Ready；反向拖 4m（> tol）⇒ Rejected 且消息可读
+        val p0 = vm.state.points[0]
+        val ltp = LocalTangentPlane(preset.center)
+        val n = preset.nVec()
+        val nudged = ltp.toLla2(ltp.toEnu2(p0) + n * 0.4)
+        assertTrue(vm.replacePoint(0, nudged))
+        assertTrue("0.4m 微调应在容差内", vm.tryFit() is MapEditViewModel.FitPreview.Ready)
+
+        val far = ltp.toLla2(ltp.toEnu2(p0) - n * 4.0)
+        assertTrue(vm.replacePoint(0, far))
+        val rejected = vm.tryFit()
+        assertTrue("超出容差应被拒绝", rejected is MapEditViewModel.FitPreview.Rejected)
+        assertTrue((rejected as MapEditViewModel.FitPreview.Rejected).message.isNotBlank())
+    }
+
+    @Test
+    fun replacePointOutOfRangeReturnsFalse() {
+        val vm = newViewModel()
+        vm.loadPreset(TrackPresetLibrary.standard400(ORIGIN))
+        assertFalse(vm.replacePoint(-1, LatLon(0.0, 0.0)))
+        assertFalse(vm.replacePoint(6, LatLon(0.0, 0.0)))
+        // 无点位时同样拒绝
+        val empty = newViewModel()
+        assertFalse(empty.replacePoint(0, LatLon(0.0, 0.0)))
+    }
+
+    @Test
+    fun presetPointsSurviveSnapshotRestore() {
+        val vm = newViewModel()
+        vm.loadPreset(TrackPresetLibrary.standard400(ORIGIN))
+        val encoded = vm.snapshot()
+        val restored = newViewModel()
+        restored.restoreSnapshot(encoded)
+        assertEquals(vm.state.points, restored.state.points)
+        assertTrue(restored.tryFit() is MapEditViewModel.FitPreview.Ready)
+    }
+
+    @Test
+    fun panScaleRotateTransformWholeTrackAndStayFitted() {
+        val vm = newViewModel()
+        val preset = TrackPresetLibrary.standard400(ORIGIN)
+        vm.loadPreset(preset)
+        val ltp = LocalTangentPlane(preset.center)
+
+        // 平移：中心东移 10m，几何不变
+        assertTrue(vm.panTrack(10.0, 0.0))
+        val pts = vm.state.points
+        val centerAfterPan = LatLon(
+            pts.map { it.latitudeDeg }.average(),
+            pts.map { it.longitudeDeg }.average(),
+        )
+        val dPan = ltp.toEnu2(centerAfterPan)
+        assertEquals(10.0, dPan.x, 1e-6)
+        assertTrue(vm.tryFit() is MapEditViewModel.FitPreview.Ready)
+        assertEquals(preset.straightHalfM, (vm.tryFit() as MapEditViewModel.FitPreview.Ready).model.a, 1e-6)
+
+        // 缩放 1.1：a/R 同比例增长
+        assertTrue(vm.scaleTrack(1.1))
+        val m2 = (vm.tryFit() as MapEditViewModel.FitPreview.Ready).model
+        assertEquals(preset.straightHalfM * 1.1, m2.a, 1e-6)
+        assertEquals(preset.bendRadiusM * 1.1, m2.r, 1e-6)
+
+        // 旋转 30°：方位角模 180 前进 30°，几何尺寸不变
+        assertTrue(vm.rotateTrack(30.0))
+        val m3 = (vm.tryFit() as MapEditViewModel.FitPreview.Ready).model
+        assertEquals(m2.a, m3.a, 1e-9)
+        assertEquals(m2.r, m3.r, 1e-9)
+        var h2 = Math.toDegrees(kotlin.math.atan2(m2.u.x, m2.u.y))
+        var h3 = Math.toDegrees(kotlin.math.atan2(m3.u.x, m3.u.y))
+        h2 = ((h2 % 180.0) + 180.0) % 180.0
+        h3 = ((h3 % 180.0) + 180.0) % 180.0
+        assertEquals(30.0, (h3 - h2 + 180.0) % 180.0, 1e-6)
+    }
+
+    @Test
+    fun transformWorksOnManualPointsToo() {
+        // 手点六点同样可整体变换（变换以拟合结果反推参数）
+        val vm = newViewModel()
+        idealPoints().forEach { vm.addPoint(it) }
+        val before = (vm.tryFit() as MapEditViewModel.FitPreview.Ready).model
+        assertTrue(vm.panTrack(0.0, -8.0)) // 南移 8m
+        val after = (vm.tryFit() as MapEditViewModel.FitPreview.Ready).model
+        assertEquals(before.a, after.a, 1e-9)
+        val ltp = LocalTangentPlane(before.origin)
+        val moved = ltp.toEnu2(after.origin)
+        assertEquals(-8.0, moved.y, 1e-6)
+    }
+
+    @Test
+    fun transformRejectedWithoutFitOrBeyondBounds() {
+        // 无六点 ⇒ false 且状态不变
+        val empty = newViewModel()
+        assertFalse(empty.panTrack(5.0, 5.0))
+        assertFalse(empty.scaleTrack(1.1))
+        assertFalse(empty.rotateTrack(5.0))
+
+        // 缩到模型界外（a≤2m/R≤5m）⇒ false 且六点保持上次合法值
+        val vm = newViewModel()
+        vm.loadPreset(TrackPresetLibrary.standard400(ORIGIN))
+        val before = vm.state.points
+        assertFalse(vm.scaleTrack(0.01)) // a=0.425m 越界
+        assertEquals(before, vm.state.points)
+        assertTrue(vm.tryFit() is MapEditViewModel.FitPreview.Ready)
     }
 
     // ---------------------------------------------------------------- 生成 / 导出（导出保序口径）

@@ -14,8 +14,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.amap.api.maps.AMap
 import com.amap.api.maps.MapView
 import com.amap.api.maps.model.LatLng
+import com.amap.api.maps.model.Marker
 import io.github.haohaoo3o.tracklab.core.geo.CoordTransform
 import io.github.haohaoo3o.tracklab.core.geo.LatLon
+import io.github.haohaoo3o.tracklab.core.geo.TrackPreset
+import io.github.haohaoo3o.tracklab.core.geo.TrackPresetLibrary
 import io.github.haohaoo3o.tracklab.data.ConnectivityScenarioRepository
 import io.github.haohaoo3o.tracklab.databinding.ActivityMainBinding
 import io.github.haohaoo3o.tracklab.service.PlaybackForegroundService
@@ -170,6 +173,24 @@ class MainActivity : AppCompatActivity() {
         // 长按/点击均按顺序采集（需求固定项）
         amap.setOnMapClickListener { latLng -> onMapPointSelected(latLng) }
         amap.setOnMapLongClickListener { latLng -> onMapPointSelected(latLng) }
+        // 六点可拖动微调（预制跑道载入后贴合实际跑道）：拖动结束回写 WGS-84 并重算拟合
+        amap.setOnMarkerDragListener(object : AMap.OnMarkerDragListener {
+            override fun onMarkerDragStart(marker: Marker) = Unit
+            override fun onMarkerDrag(marker: Marker) = Unit
+            override fun onMarkerDragEnd(marker: Marker) = onMarkerNudged(marker)
+        })
+    }
+
+    /** 拖动结束：GCJ-02 → WGS-84 回写对应点位并刷新拟合预览（拟合被拒时保留错误原因）。 */
+    private fun onMarkerNudged(marker: Marker) {
+        val index = mapController?.markerIndex(marker) ?: return
+        val wgs = CoordTransform.gcj02ToWgs84(LatLon(marker.position.latitude, marker.position.longitude))
+        if (!vm.replacePoint(index, wgs)) return
+        refreshTrackUi()
+        // 拟合被拒（拖动越界）时 refreshTrackUi 已显示可读原因，不覆盖；通过则提示微调生效
+        if (vm.tryFit() is MapEditViewModel.FitPreview.Ready) {
+            binding.txtMapStatus.text = getString(R.string.preset_nudged, index)
+        }
     }
 
     private fun onMapPointSelected(latLng: LatLng) {
@@ -234,6 +255,28 @@ class MainActivity : AppCompatActivity() {
             mapController?.clearOverlays()
             refreshTrackUi()
         }
+
+        // 预制跑道（一键载入六点；随后拖动 Marker 微调贴合实际跑道）
+        binding.btnPresetStandard400.setOnClickListener {
+            // 标准 400m 放置到当前地图视野中心（GCJ-02 → WGS-84）
+            val center = mapView?.map?.cameraPosition?.target
+                ?.let { CoordTransform.gcj02ToWgs84(LatLon(it.latitude, it.longitude)) }
+            if (center == null) {
+                binding.txtMapStatus.text = getString(R.string.preset_map_not_ready)
+                return@setOnClickListener
+            }
+            loadPreset(TrackPresetLibrary.standard400(center), R.string.preset_standard_400)
+        }
+
+        // 跑道整体变换（移动/缩放/旋转；对当前拟合六点整体生效，适配不同跑道）
+        binding.btnTrackLeft.setOnClickListener { panTrack(-panStep, 0.0) }
+        binding.btnTrackRight.setOnClickListener { panTrack(panStep, 0.0) }
+        binding.btnTrackUp.setOnClickListener { panTrack(0.0, panStep) }
+        binding.btnTrackDown.setOnClickListener { panTrack(0.0, -panStep) }
+        binding.btnTrackScaleDown.setOnClickListener { scaleTrack(1.0 - scaleStep) }
+        binding.btnTrackScaleUp.setOnClickListener { scaleTrack(1.0 + scaleStep) }
+        binding.btnTrackRotateCcw.setOnClickListener { rotateTrack(-rotateStepDeg) }
+        binding.btnTrackRotateCw.setOnClickListener { rotateTrack(rotateStepDeg) }
 
         // 导出 GPX / GeoJSON（导出保序口径；WGS-84）
         binding.btnExportGpx.setOnClickListener { exportTrack(gpx = true) }
@@ -321,6 +364,63 @@ class MainActivity : AppCompatActivity() {
             R.string.point_name_p3, R.string.point_name_p4, R.string.point_name_p5,
         )
         return names.mapIndexed { i, res -> getString(R.string.point_title_format, i, getString(res)) }
+    }
+
+    // ---------------------------------------------------------------- 预制跑道 / 整体变换
+
+    /** 单步步进量（与 ViewModel 常量同源，避免散落魔法数）。 */
+    private val panStep: Double get() = MapEditViewModel.PAN_STEP_M
+    private val scaleStep: Double get() = MapEditViewModel.SCALE_STEP
+    private val rotateStepDeg: Double get() = MapEditViewModel.ROTATE_STEP_DEG
+
+    /** 跑道整体平移（米；东正北正）→ 重算拟合并刷新预览。 */
+    private fun panTrack(dEastM: Double, dNorthM: Double) = applyTrackTransform(vm.panTrack(dEastM, dNorthM))
+
+    /** 跑道整体缩放（a/R 同比例）。 */
+    private fun scaleTrack(factor: Double) = applyTrackTransform(vm.scaleTrack(factor))
+
+    /** 跑道整体旋转（度；正=顺时针）。 */
+    private fun rotateTrack(deltaDeg: Double) = applyTrackTransform(vm.rotateTrack(deltaDeg))
+
+    private fun applyTrackTransform(accepted: Boolean) {
+        if (accepted) {
+            refreshTrackUi()
+            showTrackTransformed()
+        } else {
+            binding.txtMapStatus.text = getString(R.string.track_transform_rejected)
+        }
+    }
+
+    /** 变换后状态行：回显当前 a/R/方位（方位取模 180°——u 与 −u 描述同一条跑道）。 */
+    private fun showTrackTransformed() {
+        val model = (vm.tryFit() as? MapEditViewModel.FitPreview.Ready)?.model ?: return
+        var heading = Math.toDegrees(kotlin.math.atan2(model.u.x, model.u.y))
+        heading = ((heading % 180.0) + 180.0) % 180.0
+        binding.txtMapStatus.text = getString(
+            R.string.track_transformed,
+            String.format(java.util.Locale.US, "%.1f", model.a),
+            String.format(java.util.Locale.US, "%.1f", model.r),
+            String.format(java.util.Locale.US, "%.0f", heading),
+        )
+    }
+
+    /**
+     * 载入预制跑道：六点整体替换当前点位，相机框住全图并刷新拟合预览。
+     * [nameRes] 为 UI 展示名（双语字符串资源；坐标与几何在 [TrackPreset] 内，core 不依赖 res）。
+     */
+    private fun loadPreset(preset: TrackPreset, nameRes: Int) {
+        val fit = vm.loadPreset(preset)
+        refreshTrackUi()
+        mapController?.fitCameraToBounds(
+            (fit as? MapEditViewModel.FitPreview.Ready)?.centerlineWgs84 ?: vm.state.points,
+        )
+        binding.txtMapStatus.text = when (fit) {
+            is MapEditViewModel.FitPreview.Ready ->
+                getString(R.string.preset_loaded, getString(nameRes))
+            is MapEditViewModel.FitPreview.Rejected ->
+                getString(R.string.map_hint_preview_failed, fit.message)
+            else -> getString(R.string.map_hint_all_collected)
+        }
     }
 
     // ---------------------------------------------------------------- 导出（应用私有目录，无额外权限）

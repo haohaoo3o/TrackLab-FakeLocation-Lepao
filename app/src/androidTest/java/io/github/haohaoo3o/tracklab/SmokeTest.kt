@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.ParcelFileDescriptor
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.Visibility
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -74,19 +75,34 @@ class SmokeTest {
         onView(withId(R.id.test_mode_badge)).check(matches(isDisplayed()))
 
         // ④ 主控三键：isDisplayed + isEnabled + click 无异常
+        // （三键位于 ScrollView 折叠下方——isDisplayed 断言视口内可见矩形非空，须先 scrollTo()。）
         for (id in listOf(R.id.btn_start, R.id.btn_pause, R.id.btn_stop)) {
-            onView(withId(id)).check(matches(isDisplayed()))
+            onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed()))
             onView(withId(id)).check(matches(isEnabled()))
             onView(withId(id)).perform(click())
         }
 
-        // ⑤ NEEDS_KEY 提示可见（测试构建无 AMAP Key）
-        onView(withId(R.id.txt_key_missing)).check(matches(isDisplayed()))
+        // ⑤ NEEDS_KEY 提示按**构建事实**断言：无 Key 构建可见；有 Key 构建应为 GONE
+        //（不因环境有 Key 而放行，也不把「有 Key」误报为失败）。
+        if (amapApiKeyPresent(InstrumentationRegistry.getInstrumentation().targetContext)) {
+            onView(withId(R.id.txt_key_missing)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+        } else {
+            onView(withId(R.id.txt_key_missing)).check(matches(isDisplayed()))
+        }
 
         // ⑥ 合规文案含“测试”（locale 无关）
         val target = InstrumentationRegistry.getInstrumentation().targetContext
         val title = target.getString(R.string.notification_title)
         assertTrue("⑥ notification_title 须含“测试”字样：$title", title.contains("测试"))
+    }
+
+    /** 目标包 meta-data `com.amap.api.v2.apikey` 是否在场（非空白）——与 build.gradle.kts 的
+     *  Key 注入链同源（docs/CONTRACTS.md §5）；用于 ⑤ 的「按构建事实断言」。 */
+    private fun amapApiKeyPresent(context: Context): Boolean {
+        val meta = context.packageManager
+            .getApplicationInfo(context.packageName, android.content.pm.PackageManager.GET_META_DATA)
+            .metaData
+        return !meta?.getString("com.amap.api.v2.apikey").isNullOrBlank()
     }
 
     /** shell 命令（UiAutomation，shell uid 通道）；阻塞读至命令完成并返回输出。

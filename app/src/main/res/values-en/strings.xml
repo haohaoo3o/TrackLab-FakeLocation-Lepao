@@ -73,6 +73,30 @@
     <string name="map_hint_playback_requested">Test trajectory generated; test playback entry triggered (测试/模拟定位中)</string>
 
     <!-- Parameter area (pace/cadence ranges are model-fixed bounds, sourced from MotionContracts) -->
+    <!-- Preset track and whole-track transforms -->
+    <string name="preset_label">Presets</string>
+    <string name="preset_standard_400">Std 400m at view</string>
+    <string name="preset_loaded">Preset "%1$s" loaded; drag the numbered markers to fine-tune onto the real track</string>
+    <string name="preset_nudged">p%1$d nudged; fit preview updated</string>
+    <string name="preset_map_not_ready">Map not ready; cannot use the view center. Wait for the map to load or place six points manually</string>
+    <string name="track_move">Move</string>
+    <string name="track_scale">Scale</string>
+    <string name="track_rotate">Rotate</string>
+    <string name="track_scale_down">Smaller</string>
+    <string name="track_scale_up">Larger</string>
+    <string name="track_rotate_ccw">CCW</string>
+    <string name="track_rotate_cw">CW</string>
+    <string name="cd_track_left">Move track 5 m west</string>
+    <string name="cd_track_up">Move track 5 m north</string>
+    <string name="cd_track_down">Move track 5 m south</string>
+    <string name="cd_track_right">Move track 5 m east</string>
+    <string name="cd_track_scale_down">Shrink track by 5%</string>
+    <string name="cd_track_scale_up">Enlarge track by 5%</string>
+    <string name="cd_track_rotate_ccw">Rotate track 5 deg counter-clockwise</string>
+    <string name="cd_track_rotate_cw">Rotate track 5 deg clockwise</string>
+    <string name="track_transformed">Track transformed: a=%1$s m | R=%2$s m | heading %3$s deg (fit preview updated)</string>
+    <string name="track_transform_rejected">Transform exceeds model bounds (a>2 m / R>5 m); ignored</string>
+
     <string name="range_info">Pace %1$d–%2$d s/km (3:00–11:00 min/km) | Cadence %3$d–%4$d spm (model-fixed range)</string>
     <string name="label_p_base">p_base (s/km)</string>
     <string name="label_seed">seed</string>

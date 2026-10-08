@@ -12,12 +12,28 @@ import io.github.haohaoo3o.tracklab.core.model.TrackSample
 interface PlaybackEntry {
 
     /**
-     * 开始测试回放。
+     * 开始测试回放（默认档位：accuracy = `null`，见下个重载）。
      *
      * @param samples 轨迹样本（WGS-84，[TrajectoryGenerator][io.github.haohaoo3o.tracklab.core.motion.TrajectoryGenerator] 输出）
      * @param laps 圈数（1–100）
      * @param pBaseSecPerKm 基准配速 p_base（s/km，180–660）
      * @param seed 随机种子（子流 seed/seed+1/seed+2）
      */
-    fun startTestPlayback(samples: List<TrackSample>, laps: Int, pBaseSecPerKm: Int, seed: Long)
+    fun startTestPlayback(samples: List<TrackSample>, laps: Int, pBaseSecPerKm: Int, seed: Long) {
+        startTestPlayback(samples, laps, pBaseSecPerKm, seed, null)
+    }
+
+    /**
+     * 开始测试回放（可指定输出精度档位）。
+     *
+     * @param accuracyLadderM 输出精度可选档位（10/40/60m；`null` = 默认收敛带 [3,9]），
+     *   见 [io.github.haohaoo3o.tracklab.device.LocationFrameSynthesizer]
+     */
+    fun startTestPlayback(
+        samples: List<TrackSample>,
+        laps: Int,
+        pBaseSecPerKm: Int,
+        seed: Long,
+        accuracyLadderM: Double?,
+    )
 }

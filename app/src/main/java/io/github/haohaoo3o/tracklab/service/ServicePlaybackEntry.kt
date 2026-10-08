@@ -25,8 +25,14 @@ class ServicePlaybackEntry(private val context: Context) : PlaybackEntry {
     // 低版本上 catch 类型永不匹配（ART 惰性解析），运行时安全；§7.3 钉死『try/catch
     // ForegroundServiceStartNotAllowedException』的字面形态，故保留直接 catch 并行级抑制。
     @SuppressLint("NewApi")
-    override fun startTestPlayback(samples: List<TrackSample>, laps: Int, pBaseSecPerKm: Int, seed: Long) {
-        PlaybackSessionStore.set(PlaybackSession(samples, laps, pBaseSecPerKm, seed))
+    override fun startTestPlayback(
+        samples: List<TrackSample>,
+        laps: Int,
+        pBaseSecPerKm: Int,
+        seed: Long,
+        accuracyLadderM: Double?,
+    ) {
+        PlaybackSessionStore.set(PlaybackSession(samples, laps, pBaseSecPerKm, seed, accuracyLadderM))
         val intent = Intent(context, PlaybackForegroundService::class.java)
             .setAction(PlaybackForegroundService.ACTION_START)
         try {

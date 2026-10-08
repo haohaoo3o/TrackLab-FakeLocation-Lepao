@@ -73,6 +73,30 @@
     <string name="map_hint_preview_failed">拟合失败：%1$s</string>
     <string name="map_hint_playback_requested">测试轨迹已生成，已进入测试回放入口（测试/模拟定位中）</string>
 
+    <!-- 预制跑道与整体变换 -->
+    <string name="preset_label">预制跑道</string>
+    <string name="preset_standard_400">标准400m·视野中心</string>
+    <string name="preset_loaded">已载入预制跑道「%1$s」，可拖动编号 Marker 微调贴合实际跑道</string>
+    <string name="preset_nudged">p%1$d 已微调，拟合预览已更新</string>
+    <string name="preset_map_not_ready">地图尚未就绪，无法取视野中心；请等地图加载完成或先手点六点</string>
+    <string name="track_move">移动</string>
+    <string name="track_scale">缩放</string>
+    <string name="track_rotate">旋转</string>
+    <string name="track_scale_down">缩小</string>
+    <string name="track_scale_up">放大</string>
+    <string name="track_rotate_ccw">左旋</string>
+    <string name="track_rotate_cw">右旋</string>
+    <string name="cd_track_left">跑道整体西移 5 米</string>
+    <string name="cd_track_up">跑道整体北移 5 米</string>
+    <string name="cd_track_down">跑道整体南移 5 米</string>
+    <string name="cd_track_right">跑道整体东移 5 米</string>
+    <string name="cd_track_scale_down">跑道整体缩小 5%</string>
+    <string name="cd_track_scale_up">跑道整体放大 5%</string>
+    <string name="cd_track_rotate_ccw">跑道整体逆时针旋转 5 度</string>
+    <string name="cd_track_rotate_cw">跑道整体顺时针旋转 5 度</string>
+    <string name="track_transformed">跑道已整体调整：a=%1$s m · R=%2$s m · 方位 %3$s°（拟合预览已更新）</string>
+    <string name="track_transform_rejected">变换超出模型界（a>2m / R>5m），已忽略</string>
+
     <!-- 参数区（配速与步频范围为模型固定界，MotionContracts 同源） -->
     <string name="range_info">配速 %1$d–%2$d s/km（3:00–11:00 min/km）｜步频 %3$d–%4$d spm（模型固定范围）</string>
     <string name="label_p_base">p_base（s/km）</string>

@@ -27,7 +27,8 @@ object MetricResampler {
         require(deltaM > 0.0) { "重采样步长必须为正（deltaM=$deltaM）" }
         val n = Math.round(model.lengthM / deltaM).toInt().coerceAtLeast(1)
         return (0..n).map { i ->
-            val s = i * model.lengthM / n
+            // 末点精确取 L：N·(L/N) 可能比 L 大 1 ulp（浮点舍入），直接喂 C(s) 会越域抛错。
+            val s = if (i == n) model.lengthM else i * model.lengthM / n
             ResampledPoint(s, model.point(s))
         }
     }

@@ -117,6 +117,32 @@ class MetricResamplerTest {
 
     // ---------------------------------------------------------------- helpers
 
+    @Test
+    fun lastSampleExactlyAtLengthAvoidsFpDomainOverflow() {
+        // a=2.0、R=8.43 ⇒ L=60.967252139523916、N=round(L)=61；N·(L/N) 因浮点舍入比 L 大约
+        // 1 ulp（≈7.1e-15m），直接喂 C(s) 会越域抛错。六点微调后 L 变化即可触发该组合，
+        // 故末点必须精确取 L（六点微调链路回归护栏，等弧长构造不变）。
+        val model = model(2.0, 8.43)
+        val pts = MetricResampler.resample(model)
+        val n = pts.size - 1
+
+        // 末点弧长精确等于 L（不得越域）
+        assertEquals("末点 s_N 必须精确等于 L", model.lengthM, pts[n].arcS, 0.0)
+        // hazard 确实存在：N·(L/N) > L（否则本护栏失效）
+        assertTrue(
+            "N·(L/N) 应大于 L（fp 舍入）",
+            n * model.lengthM / n > model.lengthM
+        )
+        // 等弧长自检仍成立：相邻段长互差 ≤ 1e-6m
+        val steps = (0 until n).map { pts[it + 1].arcS - pts[it].arcS }
+        for (i in 1 until steps.size) {
+            assertTrue(
+                "相邻段长互差 ≤ 1e-6m：|Δs_$i − Δs_${i - 1}|=${abs(steps[i] - steps[i - 1])}",
+                abs(steps[i] - steps[i - 1]) <= MotionContracts.RESAMPLE_CLOSURE_TOL_M
+            )
+        }
+    }
+
     private fun model(a: Double, r: Double) = TrackModel(
         origin = LatLon(30.0000, 110.0000), // 合成境内测试坐标，不对应个人位置
         u = Vec2(1.0, 0.0),
