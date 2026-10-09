@@ -26,6 +26,7 @@ import io.github.haohaoo3o.tracklab.service.PlaybackMetricsFormat
 import io.github.haohaoo3o.tracklab.service.PlaybackState
 import io.github.haohaoo3o.tracklab.service.PlaybackStateMachine
 import io.github.haohaoo3o.tracklab.service.PlaybackUiState
+import io.github.haohaoo3o.tracklab.ui.MockGuideResolver
 import io.github.haohaoo3o.tracklab.ui.PermissionGate
 import io.github.haohaoo3o.tracklab.ui.map.MapEditController
 import io.github.haohaoo3o.tracklab.ui.map.MapEditViewModel
@@ -73,8 +74,8 @@ class MainActivity : AppCompatActivity() {
     /** 权限门（授权集合 + sdkInt 注入；未授权点『开始』给引导 UI）。*/
     private var permissionGate: PermissionGate? = null
 
-    /** 上次观测的 mock 引导态（边沿触发引导文案，避免刷屏）。 */
-    private var lastMockGuidance: Boolean = false
+    /** mock 引导残留清除器（上升沿写引导；投机性残留由首个恢复推帧清除）。 */
+    private val mockGuideResolver = MockGuideResolver()
 
     /** 运行时权限申请回调（授权集合变化 → 重评权限门）。 */
     private val permissionLauncher = registerForActivityResult(
@@ -470,6 +471,9 @@ class MainActivity : AppCompatActivity() {
         }
         if (gate.state == PermissionGate.State.MISSING_MOCK_SELECTION) {
             binding.txtMapStatus.text = getString(R.string.mock_location_guide)
+            // 投机性引导已展示：若随后服务 ACTIVE 恢复推帧，renderPlaybackUi 经
+            // MockGuideResolver 清除残留（避免「状态行引导」与「指标行推进」同屏矛盾）。
+            mockGuideResolver.onSpeculativeGuideShown()
         }
         val s = vm.state
         playbackRenderer?.showRoute(samples.map { LatLon(it.latitudeDeg, it.longitudeDeg) })
@@ -551,11 +555,15 @@ class MainActivity : AppCompatActivity() {
             PlaybackMetricsFormat.cadence(ui.cadenceSpm),
         )
         binding.btnPause.setText(if (ui.state == PlaybackState.PAUSED) R.string.action_resume else R.string.action_pause)
-        // mock 引导：边沿触发 mock_location_guide；试探结果回灌权限门。
-        if (ui.mockGuidance && !lastMockGuidance) {
-            binding.txtMapStatus.text = getString(R.string.mock_location_guide)
+        // mock 引导：GUIDANCE 上升沿写 mock_location_guide；投机性残留（开始入口
+        // MISSING_MOCK_SELECTION 已展示、随后服务 ACTIVE 恢复推帧）经 MockGuideResolver
+        // 清除回 map_hint_playback_requested；其余帧不写屏（避免刷屏）。
+        // 试探结果回灌权限门（公开 API 无查询接口，由推帧 side-channel 驱动）。
+        when (mockGuideResolver.onFrame(ui.mockGuidance, ui.sessionActive, ui.mockOutputActive)) {
+            "mock_location_guide" -> binding.txtMapStatus.text = getString(R.string.mock_location_guide)
+            "map_hint_playback_requested" ->
+                binding.txtMapStatus.text = getString(R.string.map_hint_playback_requested)
         }
-        lastMockGuidance = ui.mockGuidance
         if (ui.sessionActive) {
             permissionGate?.onMockSelectionChanged(!ui.mockGuidance)
         }
