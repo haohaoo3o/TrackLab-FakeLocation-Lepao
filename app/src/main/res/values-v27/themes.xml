@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 27+ 追加项：windowLightNavigationBar=false —— 导航栏用深底 → 必须配浅色图标，
+         否则三键导航不可辨（属性本身 API 27 才有，故只在本限定符目录出现）。
+
+     必须重述 parent 指向 Theme.TrackLab.Base：资源按限定符整份替换，不跨 values/ 合并，
+     若这里只写 parent="Theme.AppCompat.NoActionBar" 或省略 parent，API 27+ 设备会丢掉
+     values/themes.xml 里的全部 v2 令牌（windowBackground / 四条强调色 / 系统栏色）。 -->
+    <style name="Theme.TrackLab" parent="Theme.TrackLab.Base">
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

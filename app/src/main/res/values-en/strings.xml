@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Key set MUST equal values/strings.xml (StringsSyncTest, docs/CONTRACTS.md §10).
+<!-- Key set MUST equal values/strings.xml (StringsSyncTest, 工程契约 ).
      Compliance strings keep the "测试" marker in every locale so that the check
      (notification_title contains "测试") is locale-independent. -->
 <resources>
@@ -112,4 +112,43 @@
     <string name="error_export_failed">Export failed: %1$s</string>
     <string name="error_no_track">Collect all 6 points in fixed order and fit the track first</string>
     <string name="error_state_restore">State restore failed; defaults kept: %1$s</string>
+
+    <!-- v0.3.0 界面重绘新增（公开版；双语键集必须相等） -->
+    <string name="matrix_action_expand">Expand</string>
+    <string name="matrix_action_fold">Fold</string>
+    <string name="matrix_action_more">More</string>
+    <string name="matrix_console_fold">Fold console</string>
+    <string name="matrix_console_legend">Log: I info · OK ok · W warn · X error</string>
+    <string name="matrix_console_sec_track">Track · Map</string>
+    <string name="matrix_deco_label">Decorations &amp; motion</string>
+    <string name="matrix_group_params">Params &amp; export</string>
+    <string name="matrix_group_playback">Playback</string>
+    <string name="matrix_group_preset">Presets</string>
+    <string name="matrix_group_track">Track tools</string>
+    <string name="matrix_group_transform">Transform</string>
+    <string name="matrix_hud_test_marker">TEST</string>
+    <string name="matrix_map_cd">Map container (test track)</string>
+    <string name="matrix_map_expand">Expand map</string>
+    <string name="matrix_motion_off">Reduced motion: off (decorations on)</string>
+    <string name="matrix_overlay_cd">HUD: test/mock location metrics</string>
+    <string name="matrix_overlay_fold">Fold HUD</string>
+    <string name="matrix_overlay_grid_cd">Metrics grid (lap/distance/pace/cadence)</string>
+    <string name="matrix_rain_toggle_off">Matrix rain off</string>
+    <string name="matrix_tab_console">Console</string>
+    <string name="matrix_tab_more">More</string>
+    <string name="matrix_tab_track">Track</string>
+
+    <!-- v0.3.0 界面重绘（UI 代码引用） -->
+    <string name="matrix_led_cd">Status LED: %1$s</string>
+    <string name="matrix_map_fold">Fold map</string>
+    <string name="matrix_motion_cd">Decoration motion master switch</string>
+    <string name="matrix_motion_on">Reduced motion: on (decorations off)</string>
+    <string name="matrix_overlay_expand">Expand HUD</string>
+    <string name="matrix_rain_toggle_on">Matrix rain on</string>
+    <string name="matrix_state_completed">Completed</string>
+    <string name="matrix_state_idle">Idle</string>
+    <string name="matrix_state_paused">Paused</string>
+    <string name="matrix_state_playing">Playing</string>
+    <string name="matrix_state_stopped">Stopped</string>
+    <string name="matrix_tab_cd">Switch panel: %1$s</string>
 </resources>

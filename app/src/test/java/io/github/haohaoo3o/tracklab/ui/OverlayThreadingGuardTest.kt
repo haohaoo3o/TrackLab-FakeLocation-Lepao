@@ -5,7 +5,7 @@ import org.junit.Test
 import java.io.File
 
 /**
- * 回归测试·静态护栏（实机行为由 androidTest 的 FloatingOverlayThreadingTest
+ * 回归测试（评审问题 1）·静态护栏（实机行为由 androidTest 的 FloatingOverlayThreadingTest
  * 在真机核对，此处钉死结构；扫描前剥掉注释，行结构保留）：
  *
  * 1. [io.github.haohaoo3o.tracklab.ui.overlay.FloatingOverlayController] 的全部 View/WindowManager 突变
@@ -16,7 +16,7 @@ import java.io.File
  * 3. 服务侧（PlaybackForegroundService）不得直触 WindowManager/View 突变——HUD 一律经
  *    FloatingOverlayController 封送，绕过即重开崩溃路径。
  *
- * 纯 JVM 可执行（源码扫描）。
+ * 纯 JVM 可执行（源码扫描）。填充人：评审修复阶段。
  */
 class OverlayThreadingGuardTest {
 
@@ -45,7 +45,7 @@ class OverlayThreadingGuardTest {
             }
         }
         assertTrue(
-            "View/WindowManager 突变只允许出现在主线程执行体/触摸回调内：$violations",
+            "View/WindowManager 突变只允许出现在主线程执行体/触摸回调内（回归：评审问题 1）：$violations",
             violations.isEmpty(),
         )
     }

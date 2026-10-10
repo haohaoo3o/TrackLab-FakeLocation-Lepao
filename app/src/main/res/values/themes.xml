@@ -1,9 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 基础主题（AppCompat DayNight；不引入 Material/Compose 依赖，见 docs/CONTRACTS.md §1） -->
-    <style name="Theme.TrackLab" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="colorPrimary">#1565C0</item>
-        <item name="colorPrimaryDark">#0D47A1</item>
-        <item name="colorAccent">#FF6F00</item>
+    <!-- TrackLab v2 深色基座（来源：设计规范 附录 A.3）。
+         ① parent 由 Theme.AppCompat.DayNight.NoActionBar 改为 Theme.AppCompat.NoActionBar：
+            v2 只有一套暗色令牌，走 DayNight 会在浅色系统下把控件底/文字翻白（与 15+ 处
+            硬编码暗色 drawable 冲突）。
+         ② windowBackground = 最深的 matrix_bg_deep（#0A0D0C）消除冷启动白闪。
+         ③ 状态栏/导航栏同底色 + 浅色图标（windowLightStatusBar=false）。
+         ④ 不引入 Material / Compose / ConstraintLayout（依赖清单钉死，工程契约 ）。
+
+     结构说明（重要）：真实主题体放在 **Theme.TrackLab.Base**，Theme.TrackLab 只做继承壳。
+     原因：资源按限定符**整份替换**（同名 style 在 values-v27 里不会与 values 合并），
+     values-v27/themes.xml 必须能父承到同一份令牌，否则 API 27+ 设备会丢掉全部 v2 颜色。 -->
+    <style name="Theme.TrackLab.Base" parent="Theme.AppCompat.NoActionBar">
+
+        <!-- AppCompat 主题色（暗底 + 低饱和青，全应用唯一强调色） -->
+        <item name="colorPrimary">@color/matrix_success</item>
+        <item name="colorPrimaryDark">@color/matrix_bg_deep</item>
+        <item name="colorAccent">@color/matrix_success</item>
+
+        <!-- 控件着色：未激活=次级文本，激活=青，按下水波=12% 白（克制） -->
+        <item name="colorControlNormal">@color/matrix_text_secondary</item>
+        <item name="colorControlActivated">@color/matrix_success</item>
+        <item name="colorControlHighlight">@color/v2_ripple</item>
+
+        <!-- 文本默认色（未显式指定 textColor 的 View 也保持暗色口径） -->
+        <item name="android:textColorPrimary">@color/matrix_text_primary</item>
+        <item name="android:textColorSecondary">@color/matrix_text_secondary</item>
+        <item name="android:textColorHint">@color/v2_text_tertiary</item>
+
+        <!-- 窗口底：v2 最深背景色（消除启动白闪） -->
+        <item name="android:windowBackground">@color/matrix_bg_deep</item>
+        <item name="android:colorBackground">@color/matrix_bg_deep</item>
+
+        <!-- 系统栏：同底色 + 浅色图标。
+             注意：statusBarColor / navigationBarColor 仅对 API<35 生效——targetSdk 35 在
+             Android 15 强制 edge-to-edge，会被忽略；真正的系统栏留白靠根布局
+             android:fitsSystemWindows="true" 兜底（见 DESIGN.md ）。
+             windowLightNavigationBar 属 API 27+，放在 values-v27/themes.xml。 -->
+        <item name="android:statusBarColor">@color/matrix_bg_deep</item>
+        <item name="android:navigationBarColor">@color/matrix_bg_deep</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
+
+    <!-- 实际被 AndroidManifest 引用的名字（android:theme="@style/Theme.TrackLab"） -->
+    <style name="Theme.TrackLab" parent="Theme.TrackLab.Base" />
 </resources>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 主键（全屏唯一实底）：matrix_success 实底 + 深色文字（v2_on_accent_text 6.56:1）。
+     按下态 @color/v2_accent_pressed #6F8F80（S=12.6%，深色文字 5.50:1）；禁用态 surface_2。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_2" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_accent_pressed" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/matrix_success" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</selector>

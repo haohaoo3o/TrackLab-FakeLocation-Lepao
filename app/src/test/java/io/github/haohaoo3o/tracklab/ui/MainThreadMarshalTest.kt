@@ -13,9 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * 回归测试：[MainThreadMarshal] 线程封送语义——HUD 的 View/WindowManager 突变
+ * 回归测试（评审问题 1）：[MainThreadMarshal] 线程封送语义——HUD 的 View/WindowManager 突变
  * 必须恒在 UI（主）线程执行；后台线程调用同步封送返回值/异常原样回传；异步恒投递且 FIFO 保序
  * （在 UI 线程上也不内联，防后发先至写花 HUD）。纯 JVM 可执行（判据/投递口注入）。
+ * 填充人：评审修复阶段。
  */
 class MainThreadMarshalTest {
 

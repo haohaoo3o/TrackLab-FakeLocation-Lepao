@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 界面字形·导出/落盘（24dp intrinsic，单 path，纯白）。
+     用于状态板导出键（P3 row3）的 drawableStart。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11,3 H13 V12 H16 L12,17 L8,12 H11 Z M4,19 H20 V21 H4 Z" />
+</vector>

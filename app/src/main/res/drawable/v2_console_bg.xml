@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 控制台背景：面板实底（surface_1）+ 上下 1dp 结构发丝 + 极淡扫描纹理。
+     扫描纹理是 3 条很淡的竖向渐变带（顶 / 中 / 底各一条，峰值为 4% 白，角度 270 = 自上而下），
+     不参与布局、不驱动动画（静态渲染，零帧消耗，#1）。
+     坦诚说明：纯 XML drawable 的 band 是**固定 3 条**而非可平铺的等距条纹——
+     真正逐行重复的 CRT 条纹需要位图（本工程禁位图）或自定义 Drawable（代码层，超出外观资源范围），
+     故此处用"3 条随高度分布、任意高度都不露空"的柔光带表达扫描感；若需要更强的条纹观感，
+     请在布局里叠加一个 clickable=false / focusable=false 的装饰 View 复用本件的②③④层思路。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ① 实底：比根布局亮一档，形成"窗格"台阶 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_1" />
+        </shape>
+    </item>
+
+    <!-- ② 扫描纹理带（顶）：4% 白 → 透明 → 4% 白 -->
+    <item android:gravity="top" android:height="56dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#00FFFFFF"
+                android:centerColor="#0AFFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- ③ 扫描纹理带（中）：更淡一档，避免与正文抢注意力 -->
+    <item android:gravity="center_vertical" android:height="56dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#00FFFFFF"
+                android:centerColor="#06FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- ④ 扫描纹理带（底） -->
+    <item android:gravity="bottom" android:height="56dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#00FFFFFF"
+                android:centerColor="#0AFFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- ⑤ 顶部结构发丝（压在纹理之上，保证界线清晰） -->
+    <item android:gravity="top" android:height="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+
+    <!-- ⑥ 底部结构发丝 -->
+    <item android:gravity="bottom" android:height="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</layer-list>

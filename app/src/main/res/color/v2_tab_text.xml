@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 页签文字色：与 @drawable/v2_tab 的状态对齐（选中 = 青，未选中 = 次级文本）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true" android:color="@color/matrix_success" />
+    <item android:color="@color/matrix_text_secondary" />
+</selector>

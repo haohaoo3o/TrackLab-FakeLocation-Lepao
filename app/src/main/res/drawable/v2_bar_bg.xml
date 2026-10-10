@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 全局底条背景（主控三键所在条）：应用底色实底 + 上边 1dp 结构发丝。
+     位置约束（不得动）：底条是根布局中 matrix_panel_host **之后**的兄弟节点（R2-3），
+     因此不受页签切换影响、也不在任何 ScrollView 内。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/matrix_bg_app" />
+        </shape>
+    </item>
+    <item android:gravity="top" android:height="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</layer-list>

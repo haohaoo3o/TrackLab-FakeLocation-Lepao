@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 L 形角标（1dp hairline_strong）：臂长 = 宿主 View 尺寸（建议 14×14dp）。
+     四角靠 android:rotation 0/90/180/270 复用一个 drawable。
+     装饰性 → clickable=false / focusable=false / importantForAccessibility="no"。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="top" android:height="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+    <item android:gravity="start" android:width="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+</layer-list>

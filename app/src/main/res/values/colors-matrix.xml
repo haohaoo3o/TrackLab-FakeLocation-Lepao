@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab v2 令牌（来源：设计规范  / 附录 A.1）。
+     口径：UI 用色 HSL 饱和度 S ≤ 30%（深色底族 5%~13%，四条强调色 20%~29%），
+     正文文本对比度 ≥ 4.5:1（WCAG 2.1，实算值见各条注释）。
+
+     命名约定（v2）：
+       · 既有色名（bg_deep/bg_app/card/card_pressed/divider/border_neon_muted/
+         text_primary/text_secondary/text_disabled/success/warning/error/info/scanline）
+         **保留原名、只换新值**——既有布局与 Kotlin 仍在引用，改名即 link 失败。
+       · v2 新增概念一律 `v2_` 前缀。
+       · 兼容别名（DESIGN.md 字面名，如 matrix_surface_1 / matrix_glass_panel）见 values/v2_aliases.xml。 -->
+<resources>
+
+    <!-- ── 底色族（窗口底 / 应用底）────────────────────────────────────────── -->
+    <color name="matrix_bg_deep">#0A0D0C</color>       <!-- 窗口底、系统栏区、地图卡底；text_primary 15.86:1 -->
+    <color name="matrix_bg_app">#0E1211</color>        <!-- 根布局底、面板底；text_primary 15.33:1 -->
+
+    <!-- ── 表面台阶（越靠上越亮：控制台底 → 输入框/按下 → 悬浮）────────────── -->
+    <color name="v2_surface_1">#151A19</color>         <!-- 控制台窗格底、下沉卡底；text_primary 14.30:1 -->
+    <color name="v2_surface_2">#1B211F</color>         <!-- 输入框底、次要按下态；text_primary 13.29:1 -->
+    <color name="v2_surface_3">#222927</color>         <!-- 悬浮态、强按下态；text_primary 12.06:1 -->
+
+    <!-- ── 发丝边（结构 / 激活）────────────────────────────────────────────── -->
+    <color name="v2_hairline">#2F3835</color>          <!-- 结构发丝 1dp：卡片外框、块间；非文本 -->
+    <color name="v2_hairline_strong">#47554F</color>   <!-- 激活/选中发丝、角标；非文本 2.41:1 -->
+
+    <!-- ── 分隔线（段间 1dp）───────────────────────────────────────────────── -->
+    <color name="matrix_divider">#242B29</color>       <!-- 段间分隔（1dp）；非文本，on bg_app 1.30:1（可见即可） -->
+
+    <!-- ── 文本三级 + 禁用 ─────────────────────────────────────────────────── -->
+    <color name="matrix_text_primary">#E3E9E6</color>      <!-- 正文主色、指标数字；on surface_1 14.30:1 -->
+    <color name="matrix_text_secondary">#A2ADA7</color>    <!-- 标签、次行；on surface_1 7.60:1 -->
+    <color name="v2_text_tertiary">#7E8A84</color>         <!-- 段头、图例、时钟、`- ` 级别；on surface_1 4.91:1 -->
+    <color name="matrix_text_disabled">#5C6663</color>     <!-- 禁用态文字（WCAG 对禁用控件豁免） -->
+
+    <!-- ── 四条低饱和强调色（全应用只有这 4 个 + 三级文本 = 5 个级别色）────── -->
+    <color name="matrix_success">#86AE9A</color>       <!-- 青：OK/VERIFIED、LED 播放、主键实底；7.15:1 -->
+    <color name="matrix_warning">#B8A57F</color>       <!-- 琥珀：W/PARTIAL、暂停态；7.31:1 -->
+    <color name="matrix_error">#B48C89</color>         <!-- 赭红：X/BLOCKED、失败回执、徽标、HUD 合规标记；5.91:1 -->
+    <color name="matrix_info">#8FA3B8</color>          <!-- 雾蓝：I 级别、信息行；6.78:1 -->
+
+    <!-- ── 玻璃与不透明回退（**HUD 单套玻璃**：2026-10-10 真机修复把 HUD 玻璃改成真透底，
+         见 v2_glass_hud.xml 的实算；原"模糊可用态/回退态"两件已合并，fallback 令牌已删）────── -->
+    <color name="v2_glass_panel">#E0161C1A</color>          <!-- 主界面卡片玻璃底（alpha 224/255 = 0.878） -->
+    <color name="v2_glass_hud">#C7161C1A</color>            <!-- 悬浮窗玻璃底（alpha 199/255 = 0.7804，白字 over 纯白 6.89:1） -->
+    <!-- 悬浮窗强调色承载底片（**深底片**，60% 黑 = alpha 153/255）——2026-10-10 真机复审问题 2。
+         缺陷：玻璃透射率约 19%，浅色桌面把底抬高——真机 r2-06 截图逐像素实测玻璃底 = #414643，
+         圈数 #86AE9A 对底 **WCAG 4.17:1**、按复审的度量（文字像素均值 ÷ 底像素均值，本项目
+         python 复算其 2.07/2.19 用的就是这一支）只有 **2.42**；徽标同理（旧底 = 12% 赭红 fill
+         抬到 #4B4A49：WCAG 2.94 / 均值比 2.05）。低饱和的绿/赭红就这样被冲淡。
+         修法：**强调色本身一个字不改**（色相/饱和度/四条强调色令牌不动），只把它们的**底色**换成
+         深底片——底色与"桌面有多亮"解耦。实算（WCAG 2.1 相对亮度；均值比 = 复审度量）：
+           圈数 #86AE9A：WCAG 6.72 / 7.08 / 8.06，均值比 5.08 / 6.04 / 16.48（旧 3.45 / 4.17 / 7.18）
+           暂停 #B8A57F：WCAG 6.87 / 7.24 / 8.24，均值比 5.24 / 6.23 / 16.98（旧 3.53 / 4.26 / 7.34）
+           白字 #E3E9E6：WCAG 13.44 / 14.16 / 16.11（旧 6.89 / 8.33 / 14.35）——只变好，不设上限
+           次级 #A2ADA7：WCAG 7.14 / 7.53 / 8.56（旧 3.66 / 4.43 / 7.63）
+           徽标 #B48C89：WCAG 5.55 / 5.85 / 6.66，均值比 5.03 / 5.98 / 16.30（旧 2.49 / 2.94 / 4.99）
+         三种背景依次 = **纯白（最坏底）** / 真机浅色桌面 #C8C8C8 / 应用深底 #0E1211。
+         为什么不是"很淡的 12%~20% 黑"：同一度量下 12% 只到 2.8、20% 只到 3.4（真机浅底），
+         达不到 ≥3.5 且没有余量；60% 在纯白这一最坏底上仍有 5.03~5.08。
+         透底代价（如实记录）：底片内背景透出 = 40% × 19% ≈ **8%**（60% 黑遮住其余）；
+         该带内的背景依赖仍可测（底片 over 纯白均亮 30.3 vs over 应用深底 9.6），
+         但明显低于玻璃主体——这是本轮可读性硬指标的代价，不是"玻璃整体不再透底"。 -->
+    <color name="v2_hud_ink">#99000000</color>
+
+    <color name="matrix_card">#161C1A</color>               <!-- 不透明回退实底（alpha=1.0） -->
+    <color name="matrix_card_pressed">#1B211F</color>       <!-- 卡片按下态实底 -->
+    <color name="matrix_border_neon_muted">#2F3835</color>  <!-- 既有卡片描边名（v2 值 = v2_hairline） -->
+
+    <!-- ── 填充 / 高光 / 装饰 ─────────────────────────────────────────────── -->
+    <color name="v2_top_highlight">#1FFFFFFF</color>     <!-- 顶部高光渐变起点（12% 白 → 透明） -->
+    <color name="v2_fill_accent_12">#1F86AE9A</color>    <!-- 选中/激活填充（12% 青） -->
+    <color name="v2_fill_accent_08">#1486AE9A</color>    <!-- 拖拽抓手、角标（8% 青） -->
+    <color name="v2_ripple">#1FFFFFFF</color>            <!-- colorControlHighlight 专用（克制水波） -->
+    <color name="v2_console_bar">#5986AE9A</color>       <!-- 控制台侧栏（35% 青；View.alpha=0.5 → ≈17.5%） -->
+    <color name="v2_console_bar_pulse">#5986AE9A</color> <!-- 同上：脉冲峰值语义别名（同值） -->
+    <color name="v2_accent_pressed">#6F8F80</color>      <!-- 主键按下实底（S=12.6%，深色文字 5.50:1） -->
+    <color name="v2_on_accent_text">#0A0D0C</color>      <!-- 实底上的深色文字（主键 / 实底徽标）；6.56:1 -->
+
+    <!-- ── 徽标（test_mode_badge / NEEDS_KEY 提示 / HUD 合规标记格）────────── -->
+    <color name="v2_badge_fill">#1FB48C89</color>        <!-- 12% 赭红底：matrix_error 文字 on bg_app 实测 5.40:1 ✔ -->
+    <color name="v2_badge_solid">#B48C89</color>         <!-- 实底赭红（旧醒目档；2026-10-10 起 test_mode_badge 不再使用） -->
+    <!-- 顶栏徽标低饱和档（2026-10-10 复审收口 / 第三轮）：**去掉赭红描边框**。
+         上两版经历：① 实底赭红 #B48C89（整屏唯一高饱和色块）→ ② 深底 #2A1E1C + 1dp 赭红描边
+         + 浅赭红文字 #C9A9A6 —— 两轮视觉复审仍报「粉红色描边框显眼」。
+         真机复算（r2-01-tab-console.png 徽标区 (190,110,570x60)，逐像素 HSV 饱和度
+         (max-min)/max 的均值）= **0.311**：暖黑底 #2A1E1C 自身即 S=0.333，描边 0.239，文字 0.174。
+         现版（侧条方案，见 drawable/v2_badge_strong.xml）：
+           · 底    v2_badge_dark       #141716  HSV S=0.130 → 对顶栏底 #0E1211 = 1.05:1（近中性）
+           · 文字  v2_badge_dark_text  #D6D1CD  HSV S=0.042（≤0.06，浅暖灰）
+           · 边    @color/v2_hairline  #2F3835  1dp 中性发丝（非赭红）
+           · 侧条  @color/matrix_error #B48C89  2dp 左轨
+         实算（WCAG 2.1 相对亮度，本仓库 python 脚本）：
+           文字 on 底 = **11.91:1** ✔（≥4.5:1）；侧条 on 底 = 6.06:1；侧条 on 顶栏底 = 6.34:1。
+         预期徽标区平均饱和度（r2 真机像素按新色重映射）= **0.128** ✔（目标 ≤0.18）。 -->
+    <color name="v2_badge_dark">#141716</color>
+    <color name="v2_badge_dark_text">#D6D1CD</color>
+
+    <!-- ── 地图叠加线（**白天底图 + 40% 压暗层**，2026-10-10 复审收口）──────────────
+         夜间底图被两轮复审判「饱和蓝底 + 青色标注 + 黄绿跑道抢眼」（实测地图区平均 HSV 饱和度
+         0.490 / 亮度 85），已回退为默认白天底图 + map_container 之上 40% 黑压暗层：
+         实测（把 pre-rework 白天底图按 alpha 0.40 合成后逐像素复算）地图区
+         平均 HSV 饱和度 **0.156**（= 白天原值，黑色叠层等比缩放 RGB，饱和度不变）、
+         平均亮度 **129**（目标 110~150）。
+         白天底图本身**亮**（压暗后局部亮度带 ≈130~155），故叠加线必须是**深色**才能保持
+         ≥3:1；夜间那套浅色强调线在压暗后的白天底上只剩 ≈2.1:1（不可辨），已全部替换。
+         下列四值 = DESIGN  的「白天底图叠加线三色」。判据用**压暗后的实见值**（×0.6），
+         背景取真机实测：把返工前白天底图按 alpha 0.4 合成后，沿**路线邻域**采样（排除线本身，
+         n=17236），当地背景中位 = `#989898`（L=0.314）、较暗 25% 分位 = `#7F8488`：
+           中心线 #4A7A66：实见 #2C493D，中位背景 **3.42:1** / 25% 分位 2.61:1（对白 4.92:1）
+           走廊   #7C6A45：实见 #4A4029，中位背景 **3.54:1** / 25% 分位 2.70:1（对白 5.24:1）
+           实迹   #4E6E88：实见 #2F4252，中位背景 **3.60:1** / 25% 分位 2.75:1（对白 5.37:1）
+         对照：夜间档浅色 `#86AE9A` / `#B8A57F` 压暗后对同一背景只剩 2.09 / 2.05:1（不可辨）。
+         见 ui/map/MapEditController.kt 与 ui/playback/PlaybackRenderer.kt（颜色以常量钉在同处）。 -->
+    <color name="v2_track_center">#4A7A66</color>            <!-- 拟合中心线（DESIGN  白天档） -->
+    <color name="v2_track_corridor">#7C6A45</color>          <!-- 走廊边界 ±W（DESIGN  白天档） -->
+    <color name="v2_playback_route">#4E6E88</color>          <!-- 已走路径（回放实迹，DESIGN  白天档） -->
+    <color name="v2_playback_route_ghost">#664E6E88</color>  <!-- 计划路径虚影（同色 40% alpha；压暗后实见 2.65~2.77:1，刻意可辨但不抢眼） -->
+    <!-- 六点编号 Marker：填充 #E3E9E6（= matrix_text_primary，近中性；实见 #888C8A，
+         数字 on 填充 5.9:1）+ 数字/描边 #0A0D0C（实见 #060807，对压暗后浅底带 6.37:1），见
+         ui/map/MapEditController.numberIcon()（自绘位图，颜色以常量钉在同处）。
+         为什么不用 DESIGN  的 matrix_track_center 做填充：#4A7A66 在压暗后与近黑数字只剩
+         2.03:1（0.6 缩放把内部对比度一起压扁），编号会糊；近白填充把同一对拉回 5.9:1。 -->
+
+    <!-- ── 地图压暗层（map_container 之上的不可交互 View）─────────────────────────
+         40% 黑（alpha 102/255 = 0.400）。纯黑而非调色板色：黑色叠层对 RGB 等比例缩放，
+         逐像素的**色相与饱和度完全不变**（只有亮度按 0.6 缩放）——这是"回到白天底图的 0.156
+         饱和度、只把亮度从 215 拉到 129"能同时成立的原因；换成带色相的叠层会引入色偏。 -->
+    <color name="v2_map_dim">#66000000</color>
+
+    <!-- ── 扫描线（贴地图卡顶边的静态装饰）──────────────────────────────── ── -->
+    <color name="matrix_scanline">#106E9B8A</color>      <!-- 6% 青，1dp 静态（不做扫掠动画） -->
+
+</resources>

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
  * 同 `ui/overlay/OverlayGeometry` 口径）。Android 侧由
  * [FloatingOverlayController] 注入 `Looper.getMainLooper()` 判据 + `Handler.post`。
  *
- * 回归背景：`WindowManager.addView` / View 突变**必须**在主（Looper）线程执行——
+ * 回归背景（评审问题 1）：`WindowManager.addView` / View 突变**必须**在主（Looper）线程执行——
  * 后台线程直触 ViewRootImpl 即 `RuntimeException: Can't create handler inside thread that has
  * not called Looper.prepare()` 未捕获崩溃；跨线程 setText→requestLayout 抛
  * `CalledFromWrongThreadException`。故 HUD 的创建/更新/移除一律经本类封送到 UI 线程。

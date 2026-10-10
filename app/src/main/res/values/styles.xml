@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab v2 组件样式（来源：设计规范  / 附录 A.2）。
+     全部基于 AppCompat 基类，不引入 Material。
+
+     ① 基础按钮样式带 8dp 上下 padding，**不得**用于「图标 + 文字」按钮 —— 那种键一律用
+        Transport 族（24 图标 + 2 间距 + 16 文字高 = 内容高 42dp ≤ 48dp）。
+     ② 文本族的基样式 Widget.TrackLab.Text 必须显式声明且写 parent="" —— 否则 AAPT2 会按
+        「最后一个点」推导隐式父（Widget.TrackLab.Text.Label → Widget.TrackLab.Text），
+        父不存在即 link 失败；只写 <style name="Widget.TrackLab.Text" /> 又会让它自己去找
+        Widget.TrackLab，同样失败。故必须 parent=""（DESIGN.md  R3-1 /  实测 ①②③）。
+     ③ backgroundTint=@null：AppCompat 的 Button/EditText 基样式自带背景着色，会把我们的
+        发丝描边/状态实底整体染成 colorButtonNormal；显式置空以保留 drawable 原色。
+     ④ 按钮文字一律 textAllCaps=false（AppCompat 默认全大写会显著加宽 en 标签）。 -->
+<resources>
+
+    <!-- ════════════════ 按钮族 ════════════════ -->
+
+    <style name="Widget.TrackLab.Button" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/v2_btn</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/v2_btn_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:drawableTint">@color/v2_btn_text</item>
+        <item name="android:drawablePadding">2dp</item>
+    </style>
+
+    <!-- 主键：全屏唯一实底（matrix_success 底 + 深色文字 = 6.56:1） -->
+    <style name="Widget.TrackLab.Button.Primary">
+        <item name="android:background">@drawable/v2_btn_primary</item>
+        <item name="android:textColor">@color/v2_btn_primary_text</item>
+        <item name="android:drawableTint">@color/v2_btn_primary_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <!-- 次级键：下沉实底（比背景深一档） -->
+    <style name="Widget.TrackLab.Button.Ghost">
+        <item name="android:background">@drawable/v2_btn_ghost</item>
+    </style>
+
+    <!-- 传送键（主控三键）：24dp 图标 + 文字，上下 padding 归零 → 内容高 42dp ≤ 48dp -->
+    <style name="Widget.TrackLab.Button.Transport">
+        <item name="android:background">@drawable/v2_btn_ghost</item>
+        <item name="android:textColor">@color/v2_btn_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:drawableTint">@color/v2_btn_text</item>
+        <item name="android:drawablePadding">2dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.Button.Transport.Primary">
+        <item name="android:background">@drawable/v2_btn_primary</item>
+        <item name="android:textColor">@color/v2_btn_primary_text</item>
+        <item name="android:drawableTint">@color/v2_btn_primary_text</item>
+    </style>
+
+    <!-- 页签：选中 = 12% 青实底 + 底部 2dp 青指示条（isActivated 驱动） -->
+    <style name="Widget.TrackLab.Button.Tab">
+        <item name="android:background">@drawable/v2_tab</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/v2_tab_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- 小格按钮（lab 五档 / 动作 / 连接场景）：允许两行（en 长标签），高 48dp -->
+    <style name="Widget.TrackLab.Button.Chip">
+        <item name="android:background">@drawable/v2_btn</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/v2_btn_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:drawableTint">@color/v2_btn_text</item>
+        <item name="android:drawablePadding">8dp</item>
+    </style>
+
+    <!-- ════════════════ 输入框族 ════════════════ -->
+
+    <style name="Widget.TrackLab.Edit" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/v2_field</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/matrix_text_primary</item>
+        <item name="android:textColorHint">@color/v2_text_tertiary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:minHeight">44dp</item>
+        <!-- 光标色：v2_text_cursor = 2dp matrix_success 实条。
+             android:textCursorDrawable 属 API 29+；API 26–28 由主题 colorControlActivated
+             （= matrix_success，见 themes.xml）给默认光标着色，同为青，不出现白/黑光标。 -->
+        <item name="android:textCursorDrawable">@drawable/v2_text_cursor</item>
+    </style>
+
+    <!-- ════════════════ 文本族 ════════════════ -->
+
+    <!-- 文本族基样式：parent="" 必须写（R3-1） -->
+    <style name="Widget.TrackLab.Text" parent="" />
+
+    <style name="Widget.TrackLab.Text.Label">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/matrix_text_secondary</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.PanelLabel">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/matrix_text_secondary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.Section">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/v2_text_tertiary</item>
+        <item name="android:letterSpacing">0.10</item>
+    </style>
+
+    <!-- 徽标文字（test_mode_badge / NEEDS_KEY 诊断条 / HUD 合规标记格）：
+         配 @drawable/v2_badge（12% 赭红底）→ 实测 5.40:1 ✔。
+         test_mode_badge 用 @drawable/v2_badge_strong（近中性深底 #141716 + 中性发丝边 + 2dp 赭红左轨），
+         布局里必须把 textColor 覆写为 @color/v2_badge_dark_text（#D6D1CD），实算 **11.91:1** ✔。
+         （2026-10-10 复审收口：赭红描边已去掉——两轮复审判"粉红描边显眼"，真机徽标区平均
+         HSV 饱和度 0.311；现版预期 0.128，见 drawable/v2_badge_strong.xml 的实算。） -->
+    <style name="Widget.TrackLab.Text.Badge">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/matrix_error</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.10</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">24dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.Disclaimer">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/v2_text_tertiary</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+    </style>
+
+    <!-- 等宽族：控制台 / 指标 / 数字 / 级别栏 -->
+    <style name="Widget.TrackLab.Text.MonoEvent">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/matrix_text_primary</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:breakStrategy">simple</item>
+        <item name="android:hyphenationFrequency">none</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.MonoBoard">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/matrix_text_primary</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:breakStrategy">simple</item>
+        <item name="android:hyphenationFrequency">none</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.MonoGroup">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/matrix_text_primary</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.30</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.MonoMetrics">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/matrix_text_primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Widget.TrackLab.Text.MonoClock">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/v2_text_tertiary</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+</resources>

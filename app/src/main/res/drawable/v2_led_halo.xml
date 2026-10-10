@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 LED·带光环（PLAYING 专用）：16dp 环（35% 青）+ 8dp 点，**同一件 layer-list**，
+     不新增 View（R1-8）。
+     tint 稳健性：环色已烘焙成 matrix_success 的 35% 色（#5986AE9A = alpha 89/255），
+     圆点为纯白；setBackgroundTintList(matrix_success) 在"逐层保留 alpha"与"整体染色"两种
+     实现下都得到可接受结果。宿主 16×16dp，装饰性（clickable/focusable=false）。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="16dp" android:height="16dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="#5986AE9A" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="8dp" android:height="8dp" />
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

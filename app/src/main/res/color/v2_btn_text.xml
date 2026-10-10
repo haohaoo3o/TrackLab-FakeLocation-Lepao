@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 按钮文字色（四态，与 @drawable/v2_btn 的 selector 状态**逐态对齐**，
+     来源：DESIGN.md 附录 A.4）。状态顺序 = Android 的选择顺序，先匹配先生效。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 禁用 -->
+    <item android:state_enabled="false" android:color="@color/matrix_text_disabled" />
+    <!-- 激活（选中档位 / 当前页签） -->
+    <item android:state_activated="true" android:color="@color/matrix_success" />
+    <!-- 按下 -->
+    <item android:state_pressed="true" android:color="@color/matrix_text_primary" />
+    <!-- 正常 -->
+    <item android:color="@color/matrix_text_primary" />
+</selector>

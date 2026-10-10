@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- launcher 单色层（Android 13 themed icon；DESIGN.md ）：
+     全白 alpha-only，内容与前景同构（角标 + 跑道椭圆 + 内圈 + 起点），
+     **去掉数字雨**（主题图标下只剩剪影，数字雨会糊成一团）。
+     同样全部落在半径 33dp 安全圆内。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 四角角标（1.2dp 线，最远 r=30.00） -->
+    <path
+        android:fillAlpha="0.50"
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M32.8,32.8 h8 v1.2 h-8 Z M32.8,32.8 h1.2 v8 h-1.2 Z M75.2,32.8 h-8 v1.2 h8 Z M75.2,32.8 h1.2 v8 h-1.2 Z M32.8,75.2 h8 v1.2 h-8 Z M32.8,75.2 h1.2 v-8 h-1.2 Z M75.2,75.2 h-8 v1.2 h8 Z M75.2,75.2 h1.2 v-8 h-1.2 Z" />
+
+    <!-- 跑道中心线（最远 r=21.50） -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M32.5,54 a21.5,12.5 0 1,0 43,0 a21.5,12.5 0 1,0 -43,0 Z" />
+
+    <!-- 走廊内圈（最远 r=17.00） -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.70"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.2"
+        android:pathData="M37,54 a17,8.5 0 1,0 34,0 a17,8.5 0 1,0 -34,0 Z" />
+
+    <!-- 起点 p0 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,41.5 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0 Z" />
+</vector>

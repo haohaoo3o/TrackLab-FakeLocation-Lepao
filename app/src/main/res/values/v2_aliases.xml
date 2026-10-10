@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     兼容别名（DESIGN.md 字面名 → v2 规范名）。**只为让两种命名都能 link 通过**：
+       · 本阶段交付的规范名 = `v2_` 前缀（用户要求"新概念用新名字（v2_ 前缀）"）。
+       · 设计规范 的正文与附录 A.4 里写的是 `matrix_*` 字面名
+         （@color/matrix_hairline、@drawable/matrix_glass_panel、@drawable/matrix_btn…）。
+     下游工程师**推荐统一引用 v2_ 前缀**；若照抄 DESIGN.md 的字面名，就落到这里的别名上，
+     两者指向同一份实现，不会出现"抄规范却 link 失败"。
+     实现口径：values 资源别名（<item type=…>），不改任何既有资源名，也不新增文件依赖。
+     同名不同类型的资源是允许的（既有 @color/matrix_card 与 @drawable/matrix_card 并存即先例）。
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<resources>
+
+    <!-- ── 颜色别名（DESIGN.md  令牌表字面名 → v2_ 实现）─────────────── -->
+    <item name="matrix_surface_1" type="color">@color/v2_surface_1</item>
+    <item name="matrix_surface_2" type="color">@color/v2_surface_2</item>
+    <item name="matrix_surface_3" type="color">@color/v2_surface_3</item>
+    <item name="matrix_hairline" type="color">@color/v2_hairline</item>
+    <item name="matrix_hairline_strong" type="color">@color/v2_hairline_strong</item>
+    <item name="matrix_text_tertiary" type="color">@color/v2_text_tertiary</item>
+    <item name="matrix_glass_panel" type="color">@color/v2_glass_panel</item>
+    <item name="matrix_glass_hud" type="color">@color/v2_glass_hud</item>
+    <item name="matrix_top_highlight" type="color">@color/v2_top_highlight</item>
+    <item name="matrix_fill_accent_12" type="color">@color/v2_fill_accent_12</item>
+    <item name="matrix_fill_accent_08" type="color">@color/v2_fill_accent_08</item>
+    <item name="matrix_badge_fill" type="color">@color/v2_badge_fill</item>
+    <item name="matrix_btn_text_on_accent" type="color">@color/v2_on_accent_text</item>
+    <item name="matrix_ripple" type="color">@color/v2_ripple</item>
+    <item name="matrix_console_bar" type="color">@color/v2_console_bar</item>
+    <item name="matrix_console_bar_pulse" type="color">@color/v2_console_bar_pulse</item>
+    <item name="matrix_track_center" type="color">@color/v2_track_center</item>
+    <item name="matrix_track_corridor" type="color">@color/v2_track_corridor</item>
+    <item name="matrix_playback_route" type="color">@color/v2_playback_route</item>
+    <item name="matrix_playback_route_ghost" type="color">@color/v2_playback_route_ghost</item>
+
+    <!-- ── 按钮文字色（ColorStateList）别名 → res/color/v2_* 四态选择器 ──── -->
+    <item name="matrix_btn_text" type="color">@color/v2_btn_text</item>
+    <item name="matrix_btn_primary_text" type="color">@color/v2_btn_primary_text</item>
+    <item name="matrix_tab_text" type="color">@color/v2_tab_text</item>
+
+    <!-- ── 形状/选择器别名（DESIGN.md 附录 A.4 字面名 → v2_ 实现）────────── -->
+    <item name="matrix_glass_panel" type="drawable">@drawable/v2_glass_panel</item>
+    <item name="matrix_glass_hud" type="drawable">@drawable/v2_glass_hud</item>
+    <item name="matrix_btn" type="drawable">@drawable/v2_btn</item>
+    <item name="matrix_btn_ghost" type="drawable">@drawable/v2_btn_ghost</item>
+    <item name="matrix_btn_primary" type="drawable">@drawable/v2_btn_primary</item>
+    <item name="matrix_tab" type="drawable">@drawable/v2_tab</item>
+    <item name="matrix_tabbar_bg" type="drawable">@drawable/v2_tabbar_bg</item>
+    <item name="matrix_field" type="drawable">@drawable/v2_field</item>
+    <item name="matrix_map_bg" type="drawable">@drawable/v2_map_bg</item>
+    <item name="matrix_console_bg" type="drawable">@drawable/v2_console_bg</item>
+    <item name="matrix_badge" type="drawable">@drawable/v2_badge</item>
+    <item name="matrix_led" type="drawable">@drawable/v2_led</item>
+    <item name="matrix_led_halo" type="drawable">@drawable/v2_led_halo</item>
+    <item name="matrix_corner" type="drawable">@drawable/v2_corner</item>
+    <item name="matrix_grip" type="drawable">@drawable/v2_grip</item>
+    <item name="matrix_accent_bar" type="drawable">@drawable/v2_accent_bar</item>
+
+</resources>

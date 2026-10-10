@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 发丝分隔线（水平，1dp 结构发丝 v2_hairline）。
+     用法：View 高 1dp + 本背景；块与块之间。装饰性 → clickable=false / focusable=false。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/v2_hairline" />
+    <size android:height="1dp" />
+</shape>

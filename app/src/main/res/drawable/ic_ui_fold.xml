@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 界面字形·折叠/上折（24dp intrinsic，单 path，纯白）。
+     用于段头折叠键与悬浮窗折叠键（文案进 contentDescription）。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,8.4 L19,15.4 L17.2,17.2 L12,12 L6.8,17.2 L5,15.4 Z" />
+</vector>

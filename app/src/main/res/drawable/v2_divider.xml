@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 段间分隔线（水平，1dp matrix_divider）：比结构发丝更暗一档，用于同一卡片内的段落之间
+     （区分"段"与"块"：块间用 v2_hairline，段间用本件）。装饰性 clickable=false / focusable=false。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/matrix_divider" />
+    <size android:height="1dp" />
+</shape>

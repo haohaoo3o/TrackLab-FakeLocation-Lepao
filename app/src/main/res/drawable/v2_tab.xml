@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 页签（选中 = 12% 青实底 + 底部 2dp 青指示条；由 View.isActivated 驱动）。
+     切换**无动画**（瞬时 visibility，#1：动画会拖住 Espresso 主线程空闲同步）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_activated="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/v2_fill_accent_12" />
+                </shape>
+            </item>
+            <item android:gravity="bottom" android:height="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/matrix_success" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_2" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+</selector>

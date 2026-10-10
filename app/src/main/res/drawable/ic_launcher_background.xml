@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab v2 launcher 背景（108dp 层，直角实底 + 径向渐晕）。
+     与前一版（单段 #151A19→#0A0D0C，radius 72 / centerY 0.42）相比：改三段渐晕 +
+     中心上移到 0.40 + 半径放大到 76，使光晕范围与新前景的胶囊跑道（外接 54x38）比例相称。
+     **刻意不放任何可辨识图形**：背景层在圆形/圆角遮罩下会露边，放图形会与前景打架；
+     渐晕是"不可辨识"的场，不受遮罩形状影响。
+     三档取色全部是令牌：matrix_surface_2 #1B211F → matrix_surface_1 #151A19 → matrix_bg_deep #0A0D0C。
+     中心 (0.5,0.40) → 相对 108dp 层为 (54,43.2)；到最远角 (108,108) 的距离 ≈84.4 > 76，
+     故四角落在最暗档，边缘无硬边。
+     矢量源：设计资产 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="76dp"
+        android:centerX="0.5"
+        android:centerY="0.40"
+        android:startColor="#1B211F"
+        android:centerColor="#151A19"
+        android:endColor="#0A0D0C" />
+</shape>

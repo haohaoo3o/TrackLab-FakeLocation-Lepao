@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 顶栏合规徽标底（test_mode_badge 专用）。
+     ── 2026-10-10 复审收口（第三轮）：**去掉赭红描边框** ──────────────────────────
+     上一版 = 深底 #2A1E1C + 1dp 赭红描边 #B48C89 + 浅赭红文字 #C9A9A6，两轮视觉复审都报
+     「顶栏『测试/模拟定位中』位于粉红色描边框内，是页面里突出的非低饱和色」。
+     真机复算（evidence/ui-redesign-20261010/r2-01-tab-console.png，徽标区 (190,110,570x60)，
+     逐像素 HSV 饱和度 (max-min)/max 取均值）= **0.311**；其中深底 #2A1E1C 自身 S=0.333
+     （暖黑，HSV 下限就高）、描边 0.239、文字 0.174。
+     本版改为「近中性深底 + 中性发丝边 + 浅暖灰文字 + 2dp 赭红侧条」：
+       · 底    @color/v2_badge_dark       #141716  HSV S=0.130（原 #2A1E1C 为 0.333）
+       · 边    @color/v2_hairline         #2F3835 1dp 中性结构边（不再用赭红描边）
+       · 文字  @color/v2_badge_dark_text  #D6D1CD  HSV S=0.042（≤0.06）
+       · 侧条  @color/matrix_error        #B48C89 2dp 左轨（「测试」语义提示，面积占比 <2%）
+     实算对比度（WCAG 2.1 相对亮度）：文字 on 底 **11.91:1** ✔（≥4.5:1）；侧条 on 底 6.06:1；
+     侧条 on 顶栏底 #0E1211 = 6.34:1（非文本 3:1 门槛 ✔）。
+     预期徽标区平均饱和度：把 r2 真机徽标像素按新色重映射后实算 = **0.128**（目标 ≤0.18）。
+     实现说明：不用 layer-list 的 android:width/android:gravity 定位（跨版本语义不稳），
+     改用 **android:left 内缩**——底层整块 = 赭红，本体从左侧让出 2dp，露出的即侧条。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 1) 底层：整块赭红（露出的左 2dp = 侧条；外角随 4dp 圆角） -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/matrix_error" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+
+    <!-- 2) 徽标本体：从左侧内缩 2dp，其余铺满（含 1dp 中性发丝边） -->
+    <item android:left="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_badge_dark" />
+            <corners android:radius="4dp" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</layer-list>

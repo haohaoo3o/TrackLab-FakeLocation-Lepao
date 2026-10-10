@@ -1,54 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 布局 ID 见本文件；SmokeTest 断言见 androidTest/SmokeTest.kt。仅用 LinearLayout/FrameLayout，
-     不引入 ConstraintLayout（依赖清单钉死，§1）。测试轨迹声明、地图容器下方的
-     状态行、配速与步频范围展示、p_base/seed/圈数输入、撤销/重置、导出 GPX/GeoJSON。 -->
+<!--
+  TrackLab 主界面 v2（分段面板控制台；视觉规范 = 设计资产）。
+  View ID 契约见 工程契约  /  增补；SmokeTest引用见各自注释。
+
+  九层分区（DESIGN ）：
+    0 系统栏区（根 fitsSystemWindows + 根底色承托）
+    1 matrix_top_bar        标识别名 + LED 状态点 + 常驻测试徽标（test_mode_badge，含「测试」）+ 状态词 + 时钟
+    2 txt_key_missing       NEEDS_KEY 诊断条（默认 visible，显隐由 PrivacyGateController 驱动）
+    3 txt_disclaimer        测试轨迹声明（常驻合规文案，禁止截断）
+    4 privacy_dialog_root   隐私区块（默认 GONE，consent 驱动）
+    5 matrix_tab_bar        3 枚页签（控制台/跑道/更多）
+    6 matrix_map_frame      地图卡（weight=0.42，装饰层声明在 map_container **之后**修 z 序）
+    7 matrix_panel_host     3 个分段面板（P1 控制台 / P2 跑道 / P3 更多）
+    8 matrix_control_bar    全局底条（主控三键，**不在任何面板/滚动区内** ⇒ 4 页签恒可见）
+
+  硬约束：只用 LinearLayout / FrameLayout / ScrollView / ScrollView 子类；零新增依赖；
+  所有装饰性 View 一律 clickable=false + focusable=false + importantAccessibility=no（绝不吞地图触摸/焦点）；
+  P2/P3/P4 面板根节点**必须是 ScrollView**（SmokeTest 的 perform(scrollTo()) 要求可滚动祖先，DESIGN /）。
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:background="@color/matrix_bg_app"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
 
-    <!-- 常驻测试徽标（文案与通知同源，含“测试”字样） -->
-    <TextView
-        android:id="@+id/test_mode_badge"
+    <!-- ═══════════ 1 顶栏：标识 + LED + 徽标（唯一可伸缩元素）+ 状态词/时钟 ═══════════ -->
+    <LinearLayout
+        android:id="@+id/matrix_top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#C62828"
-        android:gravity="center"
-        android:padding="6dp"
-        android:text="@string/test_mode_badge"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold" />
+        android:background="@color/matrix_bg_app"
+        android:gravity="center_vertical"
+        android:minHeight="44dp"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp">
 
-    <!-- NEEDS_KEY 提示：无 Key 时可见（默认 visible）；显隐由 PrivacyGateController 驱动 -->
+        <!-- 应用标识（24dp vector；纯装饰，不参与焦点/触摸） -->
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:src="@drawable/v2_mark_header"
+            android:tint="@color/matrix_success" />
+
+        <!-- 运行状态 LED（16×16dp；颜色/光环/呼吸由 LedDotView 自持，见 ui/matrix/LedDotView.kt） -->
+        <io.github.haohaoo3o.tracklab.ui.matrix.LedDotView
+            android:id="@+id/matrix_led_status"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="8dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+
+        <!-- B8 ③ 常驻测试徽标：文案与通知同源、恒含「测试」字样（StringsSyncTest 双语常驻断言）。
+             weight=1 + maxLines=2 + 不截断：en 长文案换行而不挤掉右侧状态词/时钟（DESIGN  R1-5）。
+             2026-10-10 复审收口（第三轮）：**去掉赭红描边框**——两轮复审都报「粉红色描边框显眼」
+             （r2 真机实测徽标区 (190,110,570x60) 平均 HSV 饱和度 0.311）。现版 = 近中性深底
+             #141716 + 1dp 中性发丝边 + 浅暖灰文字 #D6D1CD（**对比度 11.91:1**）+ 2dp 赭红侧条
+             （侧条对底 6.06:1）。预期徽标区平均饱和度 **0.128** ✔（≤0.18）。实算见
+             drawable/v2_badge_strong.xml 与 colors-matrix.xml 的注释。 -->
+        <TextView
+            android:id="@+id/test_mode_badge"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/v2_badge_strong"
+            android:gravity="center_vertical|start"
+            android:maxLines="2"
+            android:minHeight="24dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/test_mode_badge"
+            android:textColor="@color/v2_badge_dark_text"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 回放状态词（5 值；全局恒写——切页签也不停更，DESIGN  闸门表） -->
+            <TextView
+                android:id="@+id/matrix_state_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/matrix_text_secondary"
+                android:textSize="11sp"
+                android:typeface="monospace" />
+
+            <!-- 界面时钟（本机挂钟；**不是**事件发生时刻，见  诚实口径） -->
+            <TextView
+                android:id="@+id/matrix_clock"
+                style="@style/Widget.TrackLab.Text.MonoClock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:ellipsize="end"
+                android:maxLines="1" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ═══════════ 2 NEEDS_KEY 诊断条（诊断必须完整：无 maxLines / 无 ellipsize） ═══════════ -->
     <TextView
         android:id="@+id/txt_key_missing"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="6dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/v2_badge"
+        android:padding="8dp"
         android:text="@string/error_amap_key_missing"
-        android:textColor="#B71C1C"
-        android:textSize="12sp" />
-
-    <!-- 测试轨迹声明：常驻明示『测试轨迹』且不自动控制其他应用 -->
-    <TextView
-        android:id="@+id/txt_disclaimer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="2dp"
-        android:text="@string/test_disclaimer"
-        android:textColor="#455A64"
+        android:textColor="@color/matrix_error"
         android:textSize="11sp" />
 
-    <!-- 隐私合规对话框区块：NEEDS_CONSENT 时显示；consent 已同意（consent_agreed=true）则保持 GONE，
-         SmokeTest 断言其不再显示。-->
+    <!-- ═══════════ 3 测试轨迹声明（常驻合规文案） + 4 隐私区块 ═══════════ -->
+    <TextView
+        android:id="@+id/txt_disclaimer"
+        style="@style/Widget.TrackLab.Text.Disclaimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="4dp"
+        android:text="@string/test_disclaimer" />
+
     <LinearLayout
         android:id="@+id/privacy_dialog_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#ECEFF1"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/v2_glass_panel"
         android:orientation="vertical"
-        android:padding="12dp"
+        android:padding="16dp"
         android:visibility="gone">
 
         <TextView
@@ -56,431 +154,989 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/privacy_dialog_title"
-            android:textStyle="bold" />
+            android:textColor="@color/matrix_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.10" />
 
         <TextView
             android:id="@+id/privacy_dialog_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/privacy_dialog_message" />
-
-        <Button
-            android:id="@+id/btn_privacy_policy"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="0dp"
-            android:text="@string/privacy_dialog_view_policy" />
+            android:lineSpacingMultiplier="1.35"
+            android:text="@string/privacy_dialog_message"
+            android:textColor="@color/matrix_text_secondary"
+            android:textSize="11sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btn_privacy_deny"
+                style="@style/Widget.TrackLab.Button.Ghost"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="44dp"
                 android:layout_weight="1"
-                android:minHeight="0dp"
+                android:maxLines="2"
                 android:text="@string/privacy_dialog_deny" />
 
             <Button
                 android:id="@+id/btn_privacy_agree"
+                style="@style/Widget.TrackLab.Button.Primary"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
                 android:layout_weight="1"
-                android:minHeight="0dp"
+                android:maxLines="2"
                 android:text="@string/privacy_dialog_agree" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- 挂载高德 MapView 的容器；READY 时由 MainActivity 创建 MapView -->
-    <!-- 挂载高德 MapView 的容器；READY 时由 MainActivity 创建 MapView。
-         权重 0.45：与下方控件区（ScrollView 0.55）按比例分配剩余高度，地图不被挤压成条。 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/v2_hairline"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
+
+    <!-- ═══════════ 5 页签条（4 枚；ID 被采集脚本导航依赖，不得改名） ═══════════ -->
+    <LinearLayout
+        android:id="@+id/matrix_tab_bar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/v2_tabbar_bg"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/matrix_tab_console"
+            style="@style/Widget.TrackLab.Button.Tab"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="@string/matrix_tab_console" />
+
+        <Button
+            android:id="@+id/matrix_tab_track"
+            style="@style/Widget.TrackLab.Button.Tab"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="@string/matrix_tab_track" />
+
+        <Button
+            android:id="@+id/matrix_tab_more"
+            style="@style/Widget.TrackLab.Button.Tab"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="@string/matrix_tab_more" />
+    </LinearLayout>
+
+    <!-- ═══════════ 6 地图卡（直角 + 四角角标 + 顶部静态扫描线 + 高度两档键） ═══════════
+         装饰层（角标/扫描线/折叠键）**声明在 map_container 之后**：MapView 由
+         MainActivity.addView(mv) 追加为 map_container 的子 View，旧版装饰声明在前会被盖住。
+         地图卡不做圆角裁切（AMap MapView 内部是 GL/Surface 渲染层，clipToOutline 不生效）。 -->
     <FrameLayout
-        android:id="@+id/map_container"
+        android:id="@+id/matrix_map_frame"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="4dp"
-        android:layout_weight="0.45"
-        android:minHeight="200dp" />
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
+        android:layout_weight="0.42"
+        android:minHeight="140dp">
 
-    <!-- 控件区（预制跑道/变换/状态行/参数/主控/连接场景）：总高超一屏时可滚动，地图保持占比 -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.55"
-        android:fillViewport="true">
-
-        <LinearLayout
+        <!-- map 阶段挂载高德 MapView 的容器 -->
+        <FrameLayout
+            android:id="@+id/map_container"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@drawable/v2_map_bg"
+            android:contentDescription="@string/matrix_map_cd" />
+
+        <!-- 地图压暗层（2026-10-10 复审收口 / 第三轮）：40% 黑（@color/v2_map_dim = #66000000）。
+             为什么在**这里**：底图回退为默认白天样式后（MainActivity.initMapIfAllowed），
+             原「白天底图 + 浅色叠加线 = 整屏最大高饱和面」的问题改由压暗解决——黑色叠层等比
+             缩放 RGB，**色相/饱和度逐像素不变**（地图区平均 HSV 饱和度 0.156 保持，实测），
+             只把平均亮度 215 → **129**（目标 110~150）。
+             为什么声明在 map_container **之后**：MapView 由 MainActivity.addView 追加为
+             map_container 的子 View，只有在 map_container 之后声明的兄弟节点才画在其上
+             （与 matrix_scanline_view / 四角角标同一手法，真机截图可验证）。
+             手势穿透：本层 clickable/focusable=false + 无监听 ⇒ onTouchEvent 返回 false，
+             FrameLayout 继续把事件派发给下层 map_container，地图拖动/双指缩放照常。
+             纯装饰：importantForAccessibility=no。 -->
+        <View
+            android:id="@+id/matrix_map_dim"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/v2_map_dim"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+
+        <!-- 四角角标：1dp hairline_strong 的 L 形，14×14dp，复用一个 drawable 靠 rotation 摆位 -->
+        <View
+            android:id="@+id/matrix_corner_tl"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="top|start"
+            android:layout_margin="6dp"
+            android:background="@drawable/v2_corner"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+
+        <View
+            android:id="@+id/matrix_corner_tr"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="6dp"
+            android:background="@drawable/v2_corner"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:rotation="90" />
+
+        <View
+            android:id="@+id/matrix_corner_bl"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="6dp"
+            android:background="@drawable/v2_corner"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:rotation="270" />
+
+        <View
+            android:id="@+id/matrix_corner_br"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="6dp"
+            android:background="@drawable/v2_corner"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:rotation="180" />
+
+        <!-- 顶部扫描线：1dp 静态装饰（**无扫掠动画**，DESIGN #8 / #3） -->
+        <View
+            android:id="@+id/matrix_scanline_view"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:background="@drawable/matrix_scanline"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+
+        <!-- 地图高度两档（0.42 ↔ 0.66；切高度=改权重 + requestLayout，无动画） -->
+        <ImageButton
+            android:id="@+id/matrix_map_fold_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|end"
+            android:layout_margin="6dp"
+            android:background="@drawable/v2_btn_ghost"
+            android:backgroundTint="@null"
+            android:clickable="true"
+            android:contentDescription="@string/matrix_map_expand"
+            android:focusable="true"
+            android:scaleType="center"
+            android:src="@drawable/ic_ui_expand"
+            android:tint="@color/matrix_text_secondary" />
+    </FrameLayout>
+
+    <!-- ═══════════ 7 面板宿主（weight=0.58；4 个分段面板靠 VISIBLE/GONE 切换） ═══════════ -->
+    <FrameLayout
+        android:id="@+id/matrix_panel_host"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.58">
+
+        <!-- ─────────── P1 控制台（默认打开）：HUD 指标行 + 等宽日志控制台 ───────────
+             P1 用权重布局（控制台占满剩余），**不套外层 ScrollView**（权重会失效）；
+             行内自带滚动祖先 matrix_console_scroll —— SmokeTest 的四个 lab 文本行
+             perform(scrollTo()) 依赖它（DESIGN /）。 -->
+        <LinearLayout
+            android:id="@+id/matrix_panel_console"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- 预制跑道：一键载入标准 400m 到当前视野中心，随后拖动 Marker 微调 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="2dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="@string/preset_label"
-                    android:textColor="#455A64"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_preset_standard_400"
+                    style="@style/Widget.TrackLab.Text.Section"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/preset_standard_400"
-                    android:textSize="12sp" />
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="@string/matrix_group_playback" />
             </LinearLayout>
 
-            <!-- 预制跑道整体变换：移动/缩放/旋转（对当前拟合六点整体生效，适配不同跑道） -->
+            <!-- 指标行（44dp）：当前圈/距离/配速/步频（overlay_metrics_format 同源，F10） -->
             <LinearLayout
+                android:id="@+id/matrix_hud_row"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="@string/track_move"
-                    android:textColor="#455A64"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_track_left"
+                    android:id="@+id/txt_playback_metrics"
+                    style="@style/Widget.TrackLab.Text.MonoMetrics"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_left"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="←"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btn_track_up"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_up"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="↑"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btn_track_down"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_down"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="↓"
-                    android:textSize="14sp" />
-
-                <Button
-                    android:id="@+id/btn_track_right"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_right"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="→"
-                    android:textSize="14sp" />
+                    android:ellipsize="end"
+                    android:singleLine="true" />
             </LinearLayout>
+
+            <!-- 控制台列（2026-10-10 真机修复）：head 行（级别图例 + 折叠键）**移出 ScrollView**，
+                 成为常驻头行——原结构里它随日志一起上滚，真机验收看到「头行不见、日志直接顶到指标行下方」。
+                 控制台底/扫描纹理/上下发丝随之从 body 上提到本列容器（ScrollView 与 body 透明，观感不变）。 -->
+            <LinearLayout
+                android:id="@+id/matrix_console_wrap"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal">
+
+                <!-- 控制台侧栏：2dp 青（alpha 0.5 常驻 ≈17.5%；脉冲只改 View.alpha，#2） -->
+                <View
+                    android:id="@+id/matrix_console_accent_bar"
+                    android:layout_width="2dp"
+                    android:layout_height="match_parent"
+                    android:alpha="0.5"
+                    android:background="@drawable/v2_accent_bar"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:importantForAccessibility="no" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/v2_console_bg"
+                    android:orientation="vertical">
+
+                    <!-- 控制台头行：级别图例（常驻，不随日志上滚） -->
+                    <LinearLayout
+                        android:id="@+id/matrix_console_head"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/matrix_console_legend"
+                            style="@style/Widget.TrackLab.Text.Section"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/matrix_console_legend" />
+
+                    </LinearLayout>
+
+                    <!-- head 与日志区之间的 1dp 结构发丝（纯装饰，不吞触摸/焦点） -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@drawable/v2_hairline"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:importantForAccessibility="no" />
+
+                    <!-- 日志滚动区：唯一位移面。贴底吸附见 MainActivity.consoleSnapOffset ——
+                         scrollY 吸附到「**记录**边界」，视口顶边只落在记录起点（或记录之间的分隔空白），
+                         不会再露出上一条记录被裁掉后的残尾（2026-10-10 真机复审修复）。 -->
+                    <ScrollView
+                        android:id="@+id/matrix_console_scroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:fillViewport="false"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:id="@+id/matrix_console_body"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:paddingStart="8dp"
+                            android:paddingTop="4dp"
+                            android:paddingEnd="8dp"
+                            android:paddingBottom="20dp">
+
+                            <!-- ── 段头：轨迹 · 地图 ── -->
+                            <TextView
+                                style="@style/Widget.TrackLab.Text.Section"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:paddingTop="8dp"
+                                android:text="@string/matrix_console_sec_track" />
+
+                            <TextView
+                                android:id="@+id/txt_map_status"
+                                style="@style/Widget.TrackLab.Text.MonoEvent"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:ellipsize="end"
+                                android:maxLines="2" />
+
+                            <TextView
+                                android:id="@+id/txt_range_info"
+                                style="@style/Widget.TrackLab.Text.MonoGroup"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+                    </ScrollView>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ─────────── P2 跑道面板（根 = ScrollView：供 scrollTo 与内容滚动） ─────────── -->
+        <ScrollView
+            android:id="@+id/matrix_panel_track"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:gravity="center_vertical"
+                android:paddingBottom="8dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="@string/track_scale"
-                    android:textColor="#455A64"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_track_scale_down"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_scale_down"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/track_scale_down"
-                    android:textSize="12sp" />
-
-                <Button
-                    android:id="@+id/btn_track_scale_up"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_scale_up"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/track_scale_up"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="4dp"
-                    android:text="@string/track_rotate"
-                    android:textColor="#455A64"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_track_rotate_ccw"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_rotate_ccw"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/track_rotate_ccw"
-                    android:textSize="12sp" />
-
-                <Button
-                    android:id="@+id/btn_track_rotate_cw"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:contentDescription="@string/cd_track_rotate_cw"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/track_rotate_cw"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- 地图状态行：下一点提示 / 拟合结果 / 导出路径 / 回放入口回执 -->
-            <TextView
-                android:id="@+id/txt_map_status"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:padding="2dp"
-                android:textSize="12sp" />
-
-            <!-- 回放模块：当前圈数/距离/配速/步频显示（回放指标同源 HUD/通知；overlay_metrics_format） -->
-            <TextView
-                android:id="@+id/txt_playback_metrics"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <!-- 配速与步频范围展示（模型固定界，MotionContracts 同源） -->
-            <TextView
-                android:id="@+id/txt_range_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="2dp"
-                android:textColor="#546E7A"
-                android:textSize="11sp" />
-
-            <!-- 参数行：p_base / seed / 圈数（校验：180–660 整数 / long 文本 / 1–100 整数） -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <EditText
-                    android:id="@+id/edit_p_base"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="@string/label_p_base"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="4"
-                    android:singleLine="true"
-                    android:textSize="12sp" />
-
-                <EditText
-                    android:id="@+id/edit_seed"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="@string/label_seed"
-                    android:importantForAutofill="no"
-                    android:inputType="numberSigned"
-                    android:maxLength="20"
-                    android:singleLine="true"
-                    android:textSize="12sp" />
-
-                <EditText
-                    android:id="@+id/edit_laps"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="@string/label_laps"
-                    android:importantForAutofill="no"
-                    android:inputType="number"
-                    android:maxLength="3"
-                    android:singleLine="true"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- 编辑行：撤销 / 重置 / 导出 GPX / 导出 GeoJSON -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_undo"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/action_undo"
-                    android:textSize="12sp" />
-
-                <Button
-                    android:id="@+id/btn_reset"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/action_reset"
-                    android:textSize="12sp" />
-
-                <Button
-                    android:id="@+id/btn_export_gpx"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/action_export_gpx"
-                    android:textSize="12sp" />
-
-                <Button
-                    android:id="@+id/btn_export_geojson"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:padding="4dp"
-                    android:text="@string/action_export_geojson"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <!-- 主控三键：isDisplayed + isEnabled + click 无异常 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_start"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:text="@string/action_start" />
-
-                <Button
-                    android:id="@+id/btn_pause"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:text="@string/action_pause" />
-
-                <Button
-                    android:id="@+id/btn_stop"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:minHeight="0dp"
-                    android:text="@string/action_stop" />
-            </LinearLayout>
-
-            <!-- 连接场景选择（仅供本应用 UI/业务测试；不改写系统 Telephony/连接状态，不影响其他应用） -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
+                    android:id="@+id/matrix_panel_track_label"
+                    style="@style/Widget.TrackLab.Text.PanelLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="2dp"
-                    android:text="@string/connectivity_label"
-                    android:textColor="#546E7A"
-                    android:textSize="11sp" />
+                    android:paddingTop="8dp"
+                    android:text="@string/matrix_group_track" />
+
+                <!-- 段 1 预制跑道（默认展开；采集脚本按 resource-id 点击 btn_preset_sufe_wudong） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/v2_glass_panel"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_preset_head"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Widget.TrackLab.Text.Label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/matrix_group_preset" />
+
+                        <Button
+                            android:id="@+id/matrix_seg_preset_fold"
+                            style="@style/Widget.TrackLab.Button.Ghost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:contentDescription="@string/matrix_action_fold"
+                            android:minHeight="48dp"
+                            android:minWidth="48dp"
+                            android:text="@string/matrix_action_fold"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_preset_body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="visible">
+
+                        <Button
+                            android:id="@+id/btn_preset_standard_400"
+                            style="@style/Widget.TrackLab.Button.Chip"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/preset_standard_400" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 段 2 整体变换（默认收起：低频动作收进二级） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/v2_glass_panel"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_transform_head"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Widget.TrackLab.Text.Label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/matrix_group_transform" />
+
+                        <Button
+                            android:id="@+id/matrix_seg_transform_fold"
+                            style="@style/Widget.TrackLab.Button.Ghost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:contentDescription="@string/matrix_action_expand"
+                            android:minHeight="48dp"
+                            android:minWidth="48dp"
+                            android:text="@string/matrix_action_expand"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_transform_body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="44dp"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                style="@style/Widget.TrackLab.Text.Label"
+                                android:text="@string/track_move" />
+
+                            <Button
+                                android:id="@+id/btn_track_left"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_left"
+                                android:text="←" />
+
+                            <Button
+                                android:id="@+id/btn_track_up"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_up"
+                                android:text="↑" />
+
+                            <Button
+                                android:id="@+id/btn_track_down"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_down"
+                                android:text="↓" />
+
+                            <Button
+                                android:id="@+id/btn_track_right"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_right"
+                                android:text="→" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/Widget.TrackLab.Text.Label"
+                                android:layout_width="44dp"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_scale" />
+
+                            <Button
+                                android:id="@+id/btn_track_scale_down"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_scale_down"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_scale_down" />
+
+                            <Button
+                                android:id="@+id/btn_track_scale_up"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_scale_up"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_scale_up" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/Widget.TrackLab.Text.Label"
+                                android:layout_width="44dp"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_rotate" />
+
+                            <Button
+                                android:id="@+id/btn_track_rotate_ccw"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_rotate_ccw"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_rotate_ccw" />
+
+                            <Button
+                                android:id="@+id/btn_track_rotate_cw"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:contentDescription="@string/cd_track_rotate_cw"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/track_rotate_cw" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 段 3 参数与导出（默认收起） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/v2_glass_panel"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_params_head"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="48dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/Widget.TrackLab.Text.Label"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/matrix_group_params" />
+
+                        <Button
+                            android:id="@+id/matrix_seg_params_fold"
+                            style="@style/Widget.TrackLab.Button.Ghost"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:contentDescription="@string/matrix_action_expand"
+                            android:minHeight="48dp"
+                            android:minWidth="48dp"
+                            android:text="@string/matrix_action_expand"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/matrix_seg_params_body"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!--  校验：p_base 180–660 整数 / seed long 文本 / 圈数 1–100 整数 -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <EditText
+                                android:id="@+id/edit_p_base"
+                                style="@style/Widget.TrackLab.Edit"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:hint="@string/label_p_base"
+                                android:importantForAutofill="no"
+                                android:inputType="number"
+                                android:maxLength="4"
+                                android:singleLine="true" />
+
+                            <EditText
+                                android:id="@+id/edit_seed"
+                                style="@style/Widget.TrackLab.Edit"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:hint="@string/label_seed"
+                                android:importantForAutofill="no"
+                                android:inputType="numberSigned"
+                                android:maxLength="20"
+                                android:singleLine="true" />
+
+                            <EditText
+                                android:id="@+id/edit_laps"
+                                style="@style/Widget.TrackLab.Edit"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:hint="@string/label_laps"
+                                android:importantForAutofill="no"
+                                android:inputType="number"
+                                android:maxLength="3"
+                                android:singleLine="true" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btn_undo"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/action_undo" />
+
+                            <Button
+                                android:id="@+id/btn_reset"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/action_reset" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btn_export_gpx"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/action_export_gpx" />
+
+                            <Button
+                                android:id="@+id/btn_export_geojson"
+                                style="@style/Widget.TrackLab.Button.Chip"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:ellipsize="end"
+                                android:maxLines="2"
+                                android:text="@string/action_export_geojson" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- ─────────── P3 实验面板（根 = ScrollView：SmokeTest 对八枚实验控制键用 scrollTo） ─────────── -->
+
+        <!-- ─────────── P4 更多面板（根 = ScrollView）：连接场景 + 装饰与动效 ─────────── -->
+        <ScrollView
+            android:id="@+id/matrix_panel_more"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:gravity="center_vertical"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/matrix_panel_more_label"
+                    style="@style/Widget.TrackLab.Text.PanelLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    android:text="@string/matrix_action_more" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/v2_glass_panel"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        style="@style/Widget.TrackLab.Text.Label"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/connectivity_label" />
+
+                    <!-- 连接场景 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btn_conn_default"
+                            style="@style/Widget.TrackLab.Button.Chip"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/connectivity_default" />
+
+                        <Button
+                            android:id="@+id/btn_conn_cellular"
+                            style="@style/Widget.TrackLab.Button.Chip"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/connectivity_cellular" />
+
+                        <Button
+                            android:id="@+id/btn_conn_wifi"
+                            style="@style/Widget.TrackLab.Button.Chip"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/connectivity_wifi" />
+
+                        <Button
+                            android:id="@+id/btn_conn_offline"
+                            style="@style/Widget.TrackLab.Button.Chip"
+                            android:layout_width="0dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="@string/connectivity_offline" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/v2_glass_panel"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        style="@style/Widget.TrackLab.Text.Section"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/matrix_deco_label" />
+
+                    <!-- 减少动态总开关（应用级；系统「动画时长缩放=0」优先，只能在其之内再关） -->
+                    <Button
+                        android:id="@+id/matrix_motion_toggle_btn"
+                        style="@style/Widget.TrackLab.Button.Ghost"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="@string/matrix_motion_off"
+                        android:textSize="11sp" />
 
                     <Button
-                        android:id="@+id/btn_conn_default"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="0dp"
-                        android:padding="4dp"
-                        android:text="@string/connectivity_default"
-                        android:textSize="12sp" />
+                        android:id="@+id/matrix_rain_toggle_btn"
+                        style="@style/Widget.TrackLab.Button.Ghost"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="@string/matrix_rain_toggle_off"
+                        android:textSize="11sp" />
 
-                    <Button
-                        android:id="@+id/btn_conn_cellular"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="0dp"
-                        android:padding="4dp"
-                        android:text="@string/connectivity_cellular"
-                        android:textSize="12sp" />
-
-                    <Button
-                        android:id="@+id/btn_conn_wifi"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="0dp"
-                        android:padding="4dp"
-                        android:text="@string/connectivity_wifi"
-                        android:textSize="12sp" />
-
-                    <Button
-                        android:id="@+id/btn_conn_offline"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:minHeight="0dp"
-                        android:padding="4dp"
-                        android:text="@string/connectivity_offline"
-                        android:textSize="12sp" />
+                    <io.github.haohaoo3o.tracklab.ui.matrix.MatrixRainView
+                        android:id="@+id/matrix_rain_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="96dp"
+                        android:layout_marginTop="8dp"
+                        android:clickable="false"
+                        android:contentDescription="@string/matrix_rain_toggle_off"
+                        android:focusable="false"
+                        android:importantForAccessibility="no"
+                        android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
 
+    <!-- ═══════════ 8 全局底条：主控三键（matrix_control_bar） ═══════════
+         位置 = 根布局内、matrix_panel_host **之后**的兄弟节点 ⇒ 4 个页签下恒可见、
+         且**不在任何 ScrollView 内**（SmokeTest 对该三键不再 perform(scrollTo())，见 ）。
+         56dp = 1dp 发丝 + 4dp 上边距 + 48dp 键 + 4dp 下边距（算式可复算）。 -->
+    <FrameLayout
+        android:id="@+id/matrix_control_bar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/matrix_bg_app">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="4dp">
+
+            <!-- B8 ④ 主控三键：isDisplayed + isEnabled + click 无异常（恒 enabled，无禁用态） -->
+            <Button
+                android:id="@+id/btn_start"
+                style="@style/Widget.TrackLab.Button.Transport.Primary"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:drawableTop="@drawable/ic_ui_play"
+                android:text="@string/action_start" />
+
+            <Button
+                android:id="@+id/btn_pause"
+                style="@style/Widget.TrackLab.Button.Transport"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:drawableTop="@drawable/ic_ui_pause"
+                android:text="@string/action_pause" />
+
+            <Button
+                android:id="@+id/btn_stop"
+                style="@style/Widget.TrackLab.Button.Transport"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:drawableTop="@drawable/ic_ui_stop"
+                android:text="@string/action_stop" />
         </LinearLayout>
-    </ScrollView>
+
+        <!-- 上边 1dp 发丝（纯装饰，覆盖在 4dp 上边距之上，不与任何键重叠） -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:background="@drawable/v2_hairline"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
 
 </LinearLayout>

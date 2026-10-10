@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 次级按钮（ghost）：与 v2_btn 同态，但默认态给"下沉实底"surface_1（比背景深一档），
+     读作内凹而非描边；禁用态靠更暗的 divider 描边 + 文字色 text_disabled 区分。
+     用于主控三键（暂停/停止）与页内次要动作。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_1" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/matrix_divider" />
+        </shape>
+    </item>
+
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_fill_accent_12" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_3" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_1" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</selector>

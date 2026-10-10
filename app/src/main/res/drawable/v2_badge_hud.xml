@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 悬浮窗合规标记格底（**深底片**：60% 黑 @color/v2_hud_ink + 1dp @color/matrix_error 描边 +
+     4dp 圆角）——2026-10-10 真机复审问题 2。
+     缺陷：旧的 12% 赭红 fill 在浅色桌面上把底抬到 #4B4A49，徽标文字 #B48C89（本格文字色仍是
+     matrix_error，见 styles.xml 的 Widget.TrackLab.Text.Badge）对底只剩 WCAG 2.94:1 /
+     复审度量（文字均值 ÷ 底均值）**2.05**——真机实测也正是"赭红被冲淡"。
+     换深底片后（三种背景 = 纯白 / 真机浅色桌面 #C8C8C8 / 应用深底 #0E1211）：
+       徽标文字 WCAG **5.55 / 5.85 / 6.66**，均值比 **5.03 / 5.98 / 16.30**（旧 2.49 / 2.94 / 4.99）。
+     与 drawable/v2_badge（12% 赭红 fill）**分开两件**：那件还服务主界面 test_mode_badge 与
+     txt_key_missing 条——那两处在应用深底上（12% fill 实测 5.40:1）不需要、也不应改成深底片。
+     描边保持 1dp @color/matrix_error（对底片 5.55:1，非文本件也 ≥3:1），合规标记的"赭红"识别度
+     由文字 + 描边承担；数值出处见 colors-matrix.xml 的 v2_hud_ink 注释（WCAG 2.1 + 复审度量）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/v2_hud_ink" />
+    <corners android:radius="4dp" />
+    <stroke android:width="1dp" android:color="@color/matrix_error" />
+</shape>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matrix 深色卡片（v2 重写：不透明回退，alpha=1.0）。
+     保留既有文件名以免破坏既有引用（view_floating_control.xml:14 与 activity_main.xml 的
+     若干处仍写着 @drawable/matrix_card）；外观现已与 v2_card 同源：
+     12dp 圆角 + 实底 matrix_card(#161C1A) + 1dp 结构发丝 v2_hairline(#2F3835)。
+     需要磨玻璃观感时改用 @drawable/v2_glass_panel（主界面）/ @drawable/v2_glass_hud（悬浮窗）；
+     需要完全不透的卡片时用 @drawable/v2_card（与本件同一外观）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/matrix_card" />
+    <corners android:radius="12dp" />
+    <stroke android:width="1dp" android:color="@color/v2_hairline" />
+</shape>

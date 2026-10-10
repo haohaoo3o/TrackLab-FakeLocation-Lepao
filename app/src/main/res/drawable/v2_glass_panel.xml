@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 磨玻璃卡片（主界面）：半透明玻璃底 + 1dp 发丝边 + 顶部极淡高光渐变。
+     圆角 16dp（DESIGN.md  面板级）。alpha 224/255 = 0.878，over 本应用深底
+     text_primary 14.31:1 ✔（玻璃上要放语义色时改用 v2_glass_panel 的加深档或不透明回退）。
+     形状属于"实底 + 发丝 + 高光"的通用卡面，可复用于隐私区块 / 面板容器 / 卡片。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ① 玻璃底 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <solid android:color="@color/v2_glass_panel" />
+        </shape>
+    </item>
+    <!-- ② 顶部 12dp 高光（12% 白 → 透明；贴玻璃卡上沿，读作玻璃厚度） -->
+    <item android:gravity="top" android:height="12dp">
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="16dp" android:topRightRadius="16dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#0FFFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- ③ 1dp 结构发丝边 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</layer-list>

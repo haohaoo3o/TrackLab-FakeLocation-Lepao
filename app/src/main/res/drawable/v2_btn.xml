@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 默认按钮（四态，状态顺序 = Android 匹配顺序，先匹配先生效）。
+     文字色与之逐态对齐：@color/v2_btn_text（禁用→text_disabled / 激活→success /
+     按下→primary / 正常→primary）。全低饱和：激活用 12% 青实底，按下用 surface_3，均无霓虹。
+     按下反馈不用 Ripple，直接换实底。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ① 禁用 -->
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_1" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/matrix_divider" />
+        </shape>
+    </item>
+
+    <!-- ② 激活（选中档位 / 当前页签） -->
+    <item android:state_activated="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_fill_accent_12" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+
+    <!-- ③ 按下 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/v2_surface_3" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+
+    <!-- ④ 正常（透明底 + 发丝边，读作"描边键"） -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline" />
+        </shape>
+    </item>
+</selector>

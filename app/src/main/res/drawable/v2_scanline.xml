@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 扫描线（6% 青 matrix_scanline，1dp 静态）。
+     静态装饰，**无扫掠动画**。宿主 View 高 1dp + gravity=top，
+     贴地图卡顶边；z 序必须在 map_container **之后**声明（否则被 MapView 盖住）。
+     装饰性 → clickable=false / focusable=false / importantForAccessibility="no"。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/matrix_scanline" />
+    <size android:height="1dp" />
+</shape>

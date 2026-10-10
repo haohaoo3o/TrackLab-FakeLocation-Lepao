@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 LED 基座（运行/暂停/停止三态**通用**的可染色形态）：16×16dp 视图内居中 8dp 白点。
+     宿主 View 必须 16×16dp —— 8dp 视图会把光环/点裁掉（R1-8）。
+     三态上色两种用法，任选其一：
+       ① 运行时染色（DESIGN.md  口径）：View.setBackgroundTintList(ColorStateList.valueOf(color))
+          PLAYING→@color/matrix_success，PAUSED→@color/matrix_warning，STOPPED→@color/matrix_text_secondary，
+          IDLE→@color/v2_text_tertiary，COMPLETED→@color/matrix_info；
+          白色底被 SRC_IN 染色后即为该色实心点，逐层保留 alpha。
+       ② 静态换件：直接用下面三枚烘焙好的 v2_led_play / v2_led_pause / v2_led_stop。
+     装饰性：宿主必须 clickable=false / focusable=false / importantForAccessibility="no"。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="8dp" android:height="8dp" />
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

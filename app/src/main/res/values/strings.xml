@@ -18,7 +18,7 @@
     <!-- 测试轨迹声明（常驻；不自动控制其他应用） -->
     <string name="test_disclaimer">测试轨迹：仅供本应用地图/轨迹算法与模拟定位测试（测试轨迹），不会自动控制其他应用。</string>
 
-    <!-- 隐私合规对话框（§5） -->
+    <!-- 隐私合规对话框 -->
     <string name="privacy_dialog_title">隐私政策</string>
     <string name="privacy_dialog_message">在使用高德地图服务前，请先阅读并同意隐私政策。同意后应用将按合规时序初始化地图 SDK。本应用为测试/模拟定位工具，不隐藏、不 Hook 任何其他应用。</string>
     <string name="privacy_dialog_agree">同意并继续</string>
@@ -48,11 +48,11 @@
     <string name="connectivity_wifi">Wi-Fi</string>
     <string name="connectivity_offline">离线</string>
 
-    <!-- 权限 / 模拟定位人为前置的显式引导（§6） -->
+    <!-- 权限 / 模拟定位人为前置的显式引导 -->
     <string name="permission_guide_message">缺少必要权限（定位/通知），无法开始模拟定位。请在系统设置中授予后重试。</string>
     <string name="mock_location_guide">请在「开发者选项 → 选择模拟位置信息应用」中选择 TrackLab 后重试。</string>
 
-    <!-- MapEditViewModel 输入校验文案（§3；interval 项不可配置） -->
+    <!-- MapEditViewModel 输入校验文案 -->
     <string name="error_invalid_p_base">基准配速 p_base 需为 180~660 的整数（秒/公里）</string>
     <string name="error_invalid_laps">圈数需为 1~100 的整数</string>
     <string name="error_invalid_seed">seed 需为十进制整数（long）</string>
@@ -113,4 +113,43 @@
     <string name="error_export_failed">导出失败：%1$s</string>
     <string name="error_no_track">请先按固定顺序采集 6 个点位并完成拟合</string>
     <string name="error_state_restore">状态恢复失败，已用默认值继续：%1$s</string>
+
+    <!-- v0.3.0 界面重绘新增（公开版；双语键集必须相等） -->
+    <string name="matrix_action_expand">展开</string>
+    <string name="matrix_action_fold">折叠</string>
+    <string name="matrix_action_more">更多</string>
+    <string name="matrix_console_fold">折叠控制台</string>
+    <string name="matrix_console_legend">日志：I 信息 · OK 成功 · W 提示 · X 错误</string>
+    <string name="matrix_console_sec_track">轨迹 · 地图</string>
+    <string name="matrix_deco_label">装饰与动效</string>
+    <string name="matrix_group_params">参数与导出</string>
+    <string name="matrix_group_playback">回放控制</string>
+    <string name="matrix_group_preset">预制跑道</string>
+    <string name="matrix_group_track">跑道工具</string>
+    <string name="matrix_group_transform">整体变换</string>
+    <string name="matrix_hud_test_marker">测试</string>
+    <string name="matrix_map_cd">地图容器（测试轨迹）</string>
+    <string name="matrix_map_expand">展开地图</string>
+    <string name="matrix_motion_off">减少动态：关（装饰动效开启）</string>
+    <string name="matrix_overlay_cd">悬浮窗：测试/模拟定位指标</string>
+    <string name="matrix_overlay_fold">折叠悬浮窗</string>
+    <string name="matrix_overlay_grid_cd">指标网格（圈/距离/配速/步频）</string>
+    <string name="matrix_rain_toggle_off">数字雨 关</string>
+    <string name="matrix_tab_console">控制台</string>
+    <string name="matrix_tab_more">更多</string>
+    <string name="matrix_tab_track">跑道</string>
+
+    <!-- v0.3.0 界面重绘（UI 代码引用） -->
+    <string name="matrix_led_cd">状态指示灯：%1$s</string>
+    <string name="matrix_map_fold">收起地图</string>
+    <string name="matrix_motion_cd">装饰动效总开关</string>
+    <string name="matrix_motion_on">减少动态：开（装饰动效关闭）</string>
+    <string name="matrix_overlay_expand">展开悬浮窗</string>
+    <string name="matrix_rain_toggle_on">数字雨 开</string>
+    <string name="matrix_state_completed">已完成</string>
+    <string name="matrix_state_idle">空闲</string>
+    <string name="matrix_state_paused">已暂停</string>
+    <string name="matrix_state_playing">回放中</string>
+    <string name="matrix_state_stopped">已停止</string>
+    <string name="matrix_tab_cd">切换面板：%1$s</string>
 </resources>

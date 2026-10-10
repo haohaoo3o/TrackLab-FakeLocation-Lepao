@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 悬浮窗拖拽抓手：2×20dp 圆头条（8% 青 matrix_fill_accent_08）。
+     宿主 View 固定 2dp 宽 × 20dp 高；装饰性 clickable=false / focusable=false
+     （拖动由 overlay_root 的 OnTouchListener 处理，抓手本身不吞事件）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/v2_fill_accent_08" />
+    <corners android:radius="999dp" />
+</shape>

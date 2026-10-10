@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 卡片不透明回退（alpha=1.0）：任何"玻璃不可用 / 需要完全不透"的场合用它。
+     圆角 12dp（小卡级），1dp 结构发丝，无顶部高光（不透明面不需要伪造厚度）。
+     这是 matrix_card 的 v2 同源版本（既有 matrix_card.xml 已同步重写为同一外观）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/matrix_card" />
+    <corners android:radius="12dp" />
+    <stroke android:width="1dp" android:color="@color/v2_hairline" />
+</shape>

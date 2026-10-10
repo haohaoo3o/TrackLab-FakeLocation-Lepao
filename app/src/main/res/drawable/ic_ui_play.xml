@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 界面字形·播放/开始（24dp intrinsic，单 path，纯白，用 drawableTint/drawableTint 上色）。
+     用于 btn_start（恒此图标）与 btn_pause（PAUSED 时切成本枚，表示"继续"）。
+     ⚠️ 不得发明"播放或暂停"这类合成资源名：图标切换用两枚独立字形（本枚与 ic_ui_pause）
+     在代码里按状态选， 有对应的"期望空"grep 兜底。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8,5 L19,12 L8,19 Z" />
+</vector>

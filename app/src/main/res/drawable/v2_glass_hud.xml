@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 悬浮窗玻璃（**单套外观**；2026-10-10 真机修复）：
+     原来的"模糊可用态 v2_glass_hud（alpha 0.9216）↔ 回退态 v2_glass_hud_fallback（0.9412）"
+     两件已合并为这一件——平台模糊路径由 FloatingOverlayController.BLUR_BEHIND_ENABLED 开关
+     **出厂默认关闭**（MIUI V816 上整屏发虚，见该常量注释），既然默认没有平台模糊，"模糊态/回退态"
+     的区分就不存在了；v2_glass_hud_fallback.xml 与其颜色/别名已删（grep 全仓无引用）。
+
+     真机缺陷（本轮修）：旧玻璃实底 alpha 235/255 = 0.9216 实测"窗内空白带在三张不同背景下
+     逐像素差分为 0.000%"，即完全不透底、读作纯色板。今取 **alpha 199/255 = 0.7804**（落在验收给的
+     0.74–0.80 区间，透出约 22% 背景），平台模糊已关 ⇒ 透出来的是**清晰**背景（本轮目标就是
+     「看得见的半透明玻璃」，不是「看不见的模糊」）。
+
+     四层结构与可读性实算（相对亮度按 WCAG 2.1 的 sRGB 线性化；最坏底 = 纯白背景，因为浅色文字
+     在纯白上对比度最低）：
+       ① 玻璃底 0.7804 → over 纯白合成 #494E4C；
+       ② 自上而下轻遮罩（12% 黑 → 透明）：0% 处再暗一档（over 纯白 #404543），100% 处回到实底；
+       ③ 顶部 12dp 白高光（12% 白 → 透明）—— 玻璃口沿，保留；
+       ④ 双发丝（外 1dp @color/v2_hairline_strong + 内 1dp 12% 白，内层内缩 1dp）—— 保留。
+     对比度（**白字 = matrix_text_primary #E3E9E6**，L = 0.8032）：
+       · 玻璃底部（遮罩淡尽，最弱点）：over 纯白 6.89:1 ✔ ≥4.5:1
+       · 指标行/按钮行所在的上部（遮罩最强处）：over 纯白 7.97:1 ✔
+       · 同一白字 over 玻璃 over 本应用深底 #0E1211：14.35:1
+       · 按钮文字另有不透明底 v2_surface_1 #151A19 兜着：14.30:1（与玻璃透明度无关）
+     诚实口径（透明化的代价，本轮验收只要求白字达标，其余如实记录）：over **纯白** 背景时
+       matrix_warning #B8A57F = 3.53:1（指标行处 4.08:1）、matrix_success #86AE9A = 3.45:1、
+       matrix_error #B48C89 = 2.85:1；换到本应用深底这类真实背景上，error 徽标格 = 4.98:1（达标）。
+       若将来要求"任意亮底也全色达标"，须回到 alpha ≥0.9 的实底路线。
+     圆角 20dp = DESIGN ；半径上限与层序由控制器与本节约束。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ① 玻璃底（alpha 0.7804，真的透底） -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="@color/v2_glass_hud" />
+        </shape>
+    </item>
+    <!-- ② 自上而下轻遮罩（12% 黑 → 透明）：顶上一档更暗，内容行与按钮行的对比度更高；
+         必须与①同圆角，否则四角会在圆角外露出半透明深色像素。 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#1F000000"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+    <!-- ③ 顶部 12dp 高光（12% 白 → 透明）——玻璃口沿的关键之一 -->
+    <item android:gravity="top" android:height="12dp">
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="20dp" android:topRightRadius="20dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#1FFFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- ④ 外发丝（结构发丝 1dp）：亮底靠它定义边缘、暗底靠它读作棱线 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="20dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="@color/v2_hairline_strong" />
+        </shape>
+    </item>
+    <!-- ⑤ 内发丝（内缩 1dp 的 12% 白）→ 与④合成"双描边"玻璃口沿 -->
+    <item android:left="1dp" android:top="1dp" android:right="1dp" android:bottom="1dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="19dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="#1FFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

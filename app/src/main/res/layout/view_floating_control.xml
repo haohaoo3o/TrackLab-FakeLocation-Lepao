@@ -1,42 +1,313 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 悬浮窗控制条（HUD：暂停/继续/停止）。ID 见本文件；
-     几何计算归 ui/overlay/OverlayGeometry（OverlayGeometryTest 断言不变量）。-->
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     悬浮窗 HUD（F6 ⑥）· TrackLab v2 玻璃 HUD（设计资产 ；
+     平台模糊出厂默认关闭，见下 ① —— 结构仍是「模糊层（可选）+ 玻璃底 + 发丝/高光」三层）
+     ═══════════════════════════════════════════════════════════════════════════════
+     ① 模糊层：**XML 表达不了**（跨窗模糊是窗口属性），由
+        FloatingOverlayController.showOnMainThread() 在 WindowManager.LayoutParams 上设置
+        （FLAG_BLUR_BEHIND + setBlurBehindRadius(28px@2.75x)；BLUR_BEHIND_ENABLED 开关**默认
+        false**——MIUI V816 实测整屏发虚，见该常量注释）。
+     ② 玻璃底：**单套** `v2_glass_hud`（实底 alpha 199/255 = 0.7804 + 自上而下轻遮罩 + 12dp
+        白高光 + 双发丝）——真机验收要求"真的透底"，原来那套"模糊可用/回退"两件外观已合并
+        （平台模糊默认关闭后两套无区分意义，`v2_glass_hud_fallback` 已删）。
+        下面的 android:background 只是默认件，控制器每次 show() 仍幂等重设。
+     ③ 本 XML 只负责：半透明底 + 发丝边 + 顶部高光渐变 + 排布。
+     ④ 强调色承载底片（2026-10-10 真机复审问题 2）：网格行（v2_hud_strip）与合规标记格
+        （v2_badge_hud）各垫一层 **60% 黑**（@color/v2_hud_ink）圆角深底片——玻璃透射约 19%，
+        浅色桌面把底抬高后低饱和强调色会被冲淡（圈数 #86AE9A 对玻璃底只剩 4.17:1 / 复审度量 2.42）。
+        强调色令牌本身（success/warning/error）**一个字没改**，只把底色与"桌面有多亮"解耦；
+        主行指标与三键不垫底片（白字 6.89:1 本就在验收线内，按钮另有不透明底）。
+        全部实算值见 v2_hud_ink（colors-matrix.xml）与两件新 drawable 的注释。
+     ───────────────────────────────────────────────────────────────────────────────
+     折叠态（64dp 高）= 主行 48dp：抓手 + 指标格 + 合规标记格 + 暂停/停止/折叠三键；
+     展开态（120dp 高）= 主行 + 8dp gap + 网格行 48dp（LED + 圈/距离/配速/步频 4 格）。
+     折叠动效 = 控制器对 matrix_overlay_grid_wrap 的高度做 0↔56dp 插值，
+     故该 wrap 自带 8dp paddingTop（gap 与网格行同一件，收起时不留 8dp 空带）。
+     ───────────────────────────────────────────────────────────────────────────────
+     钉死 ID（工程契约  + DESIGN ）：overlay_root / txt_overlay_metrics /
+     btn_overlay_pause / btn_overlay_stop —— 一个不少，改名即断 SmokeTest/单测。
+     装饰性 View（抓手 / LED / 标记格外的图层）一律 clickable=false + focusable=false +
+     importantForAccessibility="no"：**绝不吞掉主行/窗口的触摸与焦点**（拖窗靠 overlay_root）。
+     按钮命中区 ≥48dp（OverlayGeometry.MIN_HIT_TARGET_DP，OverlayGeometryTest 断言）；
+     悬浮窗三键 paddingStart/End 归零 —— 否则 en「Resume」≈40.9dp 塞不进 48dp（DESIGN ）。
+     文字色只允许 matrix_text_primary/secondary/success/warning/error/info；
+     HUD 上禁止 tertiary/disabled（over 纯白 4.12:1，不达 AA）。
+     ═══════════════════════════════════════════════════════════════════════════════ -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/overlay_root"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#CC263238"
-    android:orientation="horizontal"
+    android:background="@drawable/v2_glass_hud"
+    android:contentDescription="@string/matrix_overlay_cd"
+    android:orientation="vertical"
     android:padding="8dp">
 
-    <!-- 当前圈数/距离/配速/步频（回放指标同源；overlay_metrics_format）。按住此区可拖动整窗。-->
-    <TextView
-        android:id="@+id/txt_overlay_metrics"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_marginEnd="8dp"
-        android:minWidth="96dp"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp" />
+    <!-- ── 主行（48dp）：抓手 · 指标格 · 合规标记格 · 三键 ─────────────────────────
+         行宽实算（DESIGN ）= 2 + 8 + 指标格 + 8 + 30 + 8 + 48 + 8 + 48 + 8 + 48
+                                  = 216 + 指标格；OverlayGeometry.MAIN_ROW_FIXED_WIDTH_DP = 216。 -->
+    <LinearLayout
+        android:id="@+id/matrix_overlay_hud_row"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <Button
-        android:id="@+id/btn_overlay_pause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/cd_overlay_pause"
-        android:minWidth="48dp"
-        android:minHeight="48dp"
-        android:text="@string/action_pause" />
+        <!-- 拖拽抓手（装饰）：2×20dp 圆头条，8% 青。不吞事件（拖动由 overlay_root 处理）。 -->
+        <View
+            android:id="@+id/matrix_overlay_grip"
+            android:layout_width="2dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/v2_grip"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
 
-    <Button
-        android:id="@+id/btn_overlay_stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:contentDescription="@string/cd_overlay_stop"
-        android:minWidth="48dp"
-        android:minHeight="48dp"
-        android:text="@string/action_stop" />
+        <!-- 指标格（DESIGN  第 2 格，weight=1）：12sp 等宽 mono_md、单行。
+             2026-10-10 真机修复（指标被省略号截断）：文本 = **前两格**（圈 + 距离，≈134dp @12sp，
+             真机指标格 145dp，放得下），配速/步频在下方网格行**全量**显示（4 格）。
+             全串四项 ≈288dp（@12sp）在 145dp 里无论如何都要 ≈6sp 才塞得进，故不做"全串 + 截断"。
+             字号自动收缩 10–12sp（平台 TextView 自 API 26 原生支持，minSdk 26 全覆盖）：视口更窄
+             （360dp → 指标格 112dp）时自动降档而不是截断数字；ellipsize 仅为 ≤320dp 退化视口的
+             最后兜底（该档设计上已记「低于模型 96dp 下限」）。
+             文本来自 PlaybackMetricsFormat（overlay_metrics_format 同源串），控制器按格切分后
+             只取前两格写主行；合规后缀已从格式串移除，控制器另有一道剥离双保险。 -->
+        <TextView
+            android:id="@+id/txt_overlay_metrics"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
+            android:clickable="false"
+            android:ellipsize="end"
+            android:focusable="false"
+            android:gravity="start|center_vertical"
+            android:includeFontPadding="false"
+            android:letterSpacing="0.01"
+            android:minWidth="96dp"
+            android:singleLine="true"
+            android:textColor="@color/matrix_text_primary"
+            android:textSize="12sp"
+            android:typeface="monospace" />
+
+        <!-- 合规标记格（R2-1）：静态文本、**永不裁剪**、不随状态或指标串变化。
+             这是悬浮窗上唯一的完整合规载体（HUD 主行会截断，通知/主界面另有徽标）。
+             颜色恒定 = matrix_error 文字 + v2_badge_hud 底（**深底片** 60% 黑 + 1dp 赭红描边）。
+             2026-10-10 真机复审问题 2：旧底（v2_badge，12% 赭红 fill）在浅色桌面上把底抬到
+             #4B4A49，文字对底只剩 WCAG 2.94:1 / 复审度量 2.05；深底片后 = 5.85:1 / 5.98
+             （真机浅色桌面，纯白最坏底 5.55 / 5.03）——数值与算法见 drawable/v2_badge_hud.xml。 -->
+        <TextView
+            android:id="@+id/matrix_overlay_test_marker"
+            style="@style/Widget.TrackLab.Text.Badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/v2_badge_hud"
+            android:clickable="false"
+            android:contentDescription="@string/matrix_hud_test_marker"
+            android:focusable="false"
+            android:gravity="center"
+            android:importantForAccessibility="yes"
+            android:maxLines="1"
+            android:minWidth="28dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="@string/matrix_hud_test_marker"
+            android:textSize="10sp" />
+
+        <!-- 暂停/继续（钉死 ID）：48×48dp、ghost 底、24dp 图标 + 11sp 文字、paddingH=0。
+             内容高算式 = 24 图标 + 2 drawablePadding + 14 文字行 + 2 + 2 = 44 ≤ 48 ✔。
+             PAUSED 时图标/文字/底色由控制器改（继续 + 琥珀 tint + 1600ms 呼吸光）。 -->
+        <Button
+            android:id="@+id/btn_overlay_pause"
+            style="@style/Widget.TrackLab.Button.Transport"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/cd_overlay_pause"
+            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/ic_ui_pause"
+            android:focusable="true"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="@string/action_pause"
+            android:textAllCaps="false"
+            android:textSize="11sp" />
+
+        <!-- 停止（钉死 ID）：同上，文字 / 图标换停止件。 -->
+        <Button
+            android:id="@+id/btn_overlay_stop"
+            style="@style/Widget.TrackLab.Button.Transport"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@string/cd_overlay_stop"
+            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/ic_ui_stop"
+            android:focusable="true"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="@string/action_stop"
+            android:textAllCaps="false"
+            android:textSize="11sp" />
+
+        <!-- 折叠/展开：纯图标键（text 为空，文案只进 contentDescription）——
+             展开中文案会被撑宽到 ≈106dp 并挤爆主行（R1-6），故一律走图标。
+             控制器用 setCompoundDrawablesWithIntrinsicBounds 换件：展开中→ic_ui_fold（上折），
+             已折叠→ic_ui_expand（下折）。 -->
+        <Button
+            android:id="@+id/matrix_overlay_fold_btn"
+            style="@style/Widget.TrackLab.Button.Transport"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@string/matrix_overlay_fold"
+            android:drawablePadding="0dp"
+            android:drawableTop="@drawable/ic_ui_fold"
+            android:focusable="true"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:minHeight="48dp"
+            android:minWidth="48dp"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:text="" />
+
+    </LinearLayout>
+
+    <!-- ── 展开态网格行（折叠态被控制器压到 0dp + GONE；默认展开，状态只存内存）─────
+         高度 = 8dp gap（本 wrap 的 paddingTop）+ 48dp 网格行 = 56dp
+         = OverlayGeometry.GRID_ROW_GAP_DP + GRID_ROW_HEIGHT_DP（折叠动效的插值目标）。 -->
+    <LinearLayout
+        android:id="@+id/matrix_overlay_grid_wrap"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        android:contentDescription="@string/matrix_overlay_grid_cd"
+        android:importantForAccessibility="yes"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:visibility="visible">
+
+        <!-- 4 格横排：LED 16dp + 圈 / 距离 / 配速 / 步频（各 weight=1、minWidth=48dp、11sp 等宽）。
+             格间 8dp、无竖线；LED 是装饰性 View（不吞事件）。
+             2026-10-10 真机复审问题 2：**整行垫深底片** v2_hud_strip（60% 黑 + 10dp 圆角）——
+             玻璃透射约 19% 时浅色桌面会把本行底抬高，圈数 #86AE9A 对玻璃底只剩 WCAG 4.17:1 /
+             复审度量（文字均值 ÷ 底均值）2.42（真机 r2-06 截图像素实测）。垫底后底色与背景解耦：
+             圈数 6.72~8.06、暂停 6.87~8.24、白字 13.44~16.11（旧 6.89）、次级 7.14~8.56
+             （三背景 = 纯白 / 真机浅色桌面 / 应用深底；算法与全部数值见 drawable/v2_hud_strip.xml
+             与 v2_hud_ink）。中间 8dp gap（wrap 的 paddingTop）不垫，玻璃观感保留。 -->
+        <LinearLayout
+            android:id="@+id/matrix_overlay_grid_row"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/v2_hud_strip"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 状态 LED（16×16dp 宿主、8dp 圆点在正中；三态换件 v2_led_play/pause/stop）。
+                 折叠态不显示本行 ⇒ 折叠态的状态表达靠指标行颜色 + 暂停键呼吸光。 -->
+            <View
+                android:id="@+id/matrix_overlay_led"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/v2_led_play"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no" />
+
+            <!-- 圈：PLAYING → matrix_success / PAUSED → matrix_warning。
+                 4 格的文字由主行 txt_overlay_metrics 统一播报（同源串），故格体自身
+                 importantForAccessibility="no"，避免读屏把同一串数字念两遍。 -->
+            <TextView
+                android:id="@+id/matrix_overlay_grid_circle"
+                style="@style/Widget.TrackLab.Text.MonoGroup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:gravity="start"
+                android:importantForAccessibility="no"
+                android:minWidth="48dp"
+                android:singleLine="true"
+                android:textColor="@color/matrix_success" />
+
+            <!-- 距离 -->
+            <TextView
+                android:id="@+id/matrix_overlay_grid_distance"
+                style="@style/Widget.TrackLab.Text.MonoGroup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:gravity="start"
+                android:importantForAccessibility="no"
+                android:minWidth="48dp"
+                android:singleLine="true" />
+
+            <!-- 配速（副行之一：配速/步频副行由同一行 4 格承载） -->
+            <TextView
+                android:id="@+id/matrix_overlay_grid_pace"
+                style="@style/Widget.TrackLab.Text.MonoGroup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:gravity="start"
+                android:importantForAccessibility="no"
+                android:minWidth="48dp"
+                android:singleLine="true" />
+
+            <!-- 步频 -->
+            <TextView
+                android:id="@+id/matrix_overlay_grid_cadence"
+                style="@style/Widget.TrackLab.Text.MonoGroup"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:gravity="start"
+                android:importantForAccessibility="no"
+                android:minWidth="48dp"
+                android:singleLine="true" />
+
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>

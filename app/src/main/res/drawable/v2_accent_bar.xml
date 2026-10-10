@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2 控制台侧栏：2dp 宽（35% 青 v2_console_bar）。
+     静态观感 = 宿主 View.alpha=0.5f（等效 ≈17.5%）；脉冲峰值 = alpha 回到 1.0f（等效 35%）。
+     动画只改 View.alpha，**不换 drawable、不改 Drawable.setAlpha**。
+     宿主 2dp 宽 × match_parent 高；装饰性 clickable=false / focusable=false。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/v2_console_bar" />
+</shape>

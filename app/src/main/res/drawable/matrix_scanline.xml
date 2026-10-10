@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 扫描线：1dp 横线 + 6% 透明度，置地图容器顶部装饰。纯 shape，无动画依赖。
+     来源：设计资产。clickable=false 由引用方保证。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#106E9B8A" />
+    <size android:height="1dp" />
+</shape>

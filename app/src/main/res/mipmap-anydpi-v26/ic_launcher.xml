@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- adaptive-icon：background/foreground 指向**不变**；monochrome 指向 v2 重绘的单色层。
+     monochrome 层已实测能被 aapt2 link 进产物（aapt2 dump xmltree 输出 E: monochrome），
+     且旧版本系统会安全忽略未知子标签。
+     注：drawable/ic_launcher_monochrome.xml（上一版单色层）自本行改指后不再被引用，
+         保留在 res 里不影响构建（本阶段不动别人的文件）。 -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/v2_launcher_monochrome" />
+</adaptive-icon>
