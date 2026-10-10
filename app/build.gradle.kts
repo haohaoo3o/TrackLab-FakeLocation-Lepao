@@ -34,8 +34,8 @@ android {
         applicationId = "io.github.haohaoo3o.tracklab"
         minSdk = 26
         targetSdk = 35
-        versionCode = 30
-        versionName = "0.3.0"
+        versionCode = 40
+        versionName = "0.4.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["AMAP_API_KEY"] = amapApiKey
     }

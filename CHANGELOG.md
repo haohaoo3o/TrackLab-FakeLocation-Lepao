@@ -4,9 +4,24 @@
 
 ## [Unreleased]
 
-## [0.3.0] - 2026-10-10
+## [0.3.0] - 2026-10-09
 
-界面彻底重绘（沿用 0.x 版本线；上一版误标为 `2.0.0`，本次一并修正为 `0.3.0`）。
+mock 引导残留清除（本版此前误标为 `2.0.0`，现按语义化 0.x 线发布为 `0.3.0`）。
+
+### Added
+
+- `ui/MockGuideResolver.kt`：开始入口的投机性引导在服务恢复推帧后清除回「回放已开始」提示，
+  消除「状态行引导」与「指标行推进」同屏矛盾（GUIDANCE 上升沿行为不变）。
+- `ui/MockGuideResolverTest.kt`（4 例 JVM 回归）。
+
+### Changed
+
+- `MainActivity` 接线（`startTestPlayback` / `renderPlaybackUi`），删除被取代的 `lastMockGuidance` 死字段。
+- `docs/VERIFICATION.md` 补覆盖项。
+
+## [0.4.0] - 2026-10-10
+
+界面彻底重绘。版本线现为 `0.2.0`（2026-10-08）→ `0.3.0`（2026-10-09，原误标 `2.0.0`，现按 0.3.0 发布）→ `0.4.0`（本次）。
 
 ### Changed
 
@@ -22,7 +37,7 @@
   并关闭高德自带的缩放/比例尺/罗盘/定位/楼层五项浮层控件。
 - **图标重绘**：自适应图标（前景跑道环 + 回放三角 + 起点节点、背景径向渐变、Android 13 单色层）；
   通知图标改为单 path 纯白（alpha-only）。
-- `versionName` 2.0.0 → 0.3.0，`versionCode` 20 → 30。
+- `versionName` → 0.4.0，`versionCode` → 40。
 
 ### Added
 
