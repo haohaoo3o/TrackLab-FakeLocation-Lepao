@@ -326,7 +326,7 @@ object LocationFrameSynthesizer {
         private fun clamp(x: Double): Double = x.coerceIn(-xMax, xMax)
     }
 
-    /** 一次会话的全部相关过程（子流偏移 11..16，与 motion 管线的 seed+0/1/2 无关）。 */
+    /** 一次会话的全部相关过程（子流偏移 11..16，与 motion 管线的 seed+0/1/2/3/4/5/6/7 无关）。 */
     private class Processes(seed: Long, accuracyLadderM: Double?) {
         /** accuracy 带（默认收敛带 [3,9]；指定档位时 = 档位带）。 */
         val accuracyBand: ClosedFloatingPointRange<Double> = accuracyLadderM?.let {

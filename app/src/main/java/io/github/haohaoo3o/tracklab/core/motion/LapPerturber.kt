@@ -16,10 +16,10 @@ import kotlin.math.tanh
  *   （σ=[MotionContracts.LAP_D_SIGMA_M]，单位米），经 w(s) 注入过渡段差异（与 PaceProfile f_bend 同源）。
  * - 消耗次序（钉死）：每圈 k 依次消耗 7 个 nextGaussian——(a_{k,1}, a_{k,2}, a_{k,3}, b_{k,1}, b_{k,2},
  *   b_{k,3}, d_k)；k=0 为初值，k≥1 为创新。子流 `Random(seed + [MotionContracts.SEED_OFFSET_LAP])`。
- * - 总偏移显式软钳：**Δ̂_k(s) = 0.55·tanh((δ_k(s) + d_k·w(s)) / 0.55)** ⇒ |Δ̂| < 0.55m
+ * - 总偏移显式软钳：**Δ̂_k(s) = 1.6·tanh((δ_k(s) + d_k·w(s)) / 1.6)** ⇒ |Δ̂| < 1.6m
  *   （[MotionContracts.SOFT_CLAMP_SCALE_M]）。
- * - 逐圈差异（固定 seed）：任意两圈 max_s|Δ̂_j − Δ̂_k| ∈ [0.005, 1.1) m——上界是 |Δ̂|<0.55 的推论，
- *   有效断言是下界 0.005（防逐圈严格重合）；seed 性质（测试钉死 seed=42）。
+ * - 逐圈差异（固定 seed）：任意两圈 max_s|Δ̂_j − Δ̂_k| ∈ [0.005, 3.2) m——上界是 |Δ̂|<1.6 的推论，
+ *   有效断言是下界 0.005（防逐圈严格重合）；seed 性质见（测试钉死 seed=42）。
  */
 class LapPerturber(
     seed: Long,
@@ -35,7 +35,7 @@ class LapPerturber(
         val bendDiffM: Double,
     )
 
-    /** (a,b,d) 子流（§3：Random(seed+2)）。 */
+    /** (a,b,d) 子流（：Random(seed+2)）。 */
     private val random = Random(seed + MotionContracts.SEED_OFFSET_LAP)
 
     /** 已生成的逐圈系数（按圈号单调延长，保证 7 个/圈的消耗次序钉死）。 */

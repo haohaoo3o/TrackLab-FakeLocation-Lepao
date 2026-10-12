@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab TL 令牌 · 单色（黑白灰）浅色（2026-10-12 单色化）。
+     灰阶只走中性轴；主操作 accent 浅色=#000000（黑实心）。
+     语义色保留名字作别名指灰（不改引用点）：tl_run→黑、tl_pause→中灰、
+     tl_stop→浅灰、tl_done/tl_danger→正文墨（错误与完成靠字重/图标/文案区分，不靠灰深浅）。
+     console/LED 按状态→灰阶映射分灰；对比度核算见发布说明。 -->
+<resources>
+    <!-- 画布 / 表面 -->
+    <color name="tl_canvas">#FFFFFF</color>
+    <color name="tl_surface">#F2F2F2</color>
+    <color name="tl_surface_2">#E4E4E4</color>
+
+    <!-- 文字 -->
+    <color name="tl_ink_strong">#111111</color>
+    <color name="tl_ink_sub">#5A5A5A</color>
+    <color name="tl_disabled_ink">#767676</color>
+
+    <!-- 结构线 / 按压 -->
+    <color name="tl_line">#D9D9D9</color>
+    <color name="tl_press">#D0D0D0</color>
+
+    <!-- 主强调（黑） -->
+    <color name="tl_accent">#000000</color>
+    <color name="tl_accent_ink">#FFFFFF</color>
+    <color name="tl_accent_soft">#E4E4E4</color>
+    <color name="tl_accent_press">#333333</color>
+
+    <!-- 运行语义（别名指灰，名字保留） -->
+    <color name="tl_run">#000000</color>
+    <color name="tl_pause">#767676</color>
+    <color name="tl_stop">#B5B5B5</color>
+    <color name="tl_done">#111111</color>
+    <color name="tl_danger">#111111</color>
+
+    <!-- 组件底 -->
+    <color name="tl_chip_bg">#F2F2F2</color>
+    <color name="tl_field_bg">#FFFFFF</color>
+    <color name="tl_badge_bg">#F2F2F2</color>
+    <color name="tl_key_bg">#E4E4E4</color>
+
+    <!-- 控制台级别（分灰；完成/告警/错误同墨，靠前缀字重图标区分） -->
+    <color name="tl_console_info">#5A5A5A</color>
+    <color name="tl_console_ok">#111111</color>
+    <color name="tl_console_warn">#111111</color>
+    <color name="tl_console_error">#111111</color>
+    <color name="tl_console_mute">#767676</color>
+
+    <!-- 运行 LED（分灰；PLAYING 实心黑唯一带光环，PAUSED 中灰+呼吸） -->
+    <color name="tl_led_idle">#8A8A8A</color>
+    <color name="tl_led_play">#000000</color>
+    <color name="tl_led_pause">#767676</color>
+    <color name="tl_led_stop">#B5B5B5</color>
+    <color name="tl_led_done">#111111</color>
+</resources>

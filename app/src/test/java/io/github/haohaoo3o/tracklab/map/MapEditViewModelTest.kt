@@ -178,7 +178,7 @@ class MapEditViewModelTest {
         val lastE = model.toEnu(fit.centerlineWgs84.last())
         assertTrue("预览闭合（首末重合）", (firstE - lastE).norm() <= 1e-3)
 
-        // 边界走廊：两侧边线距中心线 W = min(1.75, 0.3R)
+        // 边界走廊：两侧边线距中心线 W = min(2.0, 0.3R)
         val w = BoundaryGuard.halfWidth(model.r)
         for (i in fit.centerlineWgs84.indices step 50) {
             val c = model.toEnu(fit.centerlineWgs84[i])
@@ -460,7 +460,7 @@ class MapEditViewModelTest {
         // 接线后结构性断言：默认链路 generateSamples() 的输出必须等于 TrajectoryGenerator
         // .generateObserved（观测序列）同参输出——回放与导出同经该单点，同源交付。
         // generate() 真路线函数保留，其覆盖由 TrajectoryGeneratorTest /
-        // GnssObservationNoiseTest.trueRouteInvariantsUnchanged 继续承载（）。
+        // GnssObservationNoiseTest.trueRouteInvariantsUnchanged 继续承载。
         val pts = idealPoints()
         val vm = newViewModel().apply {
             pts.forEach { addPoint(it) }

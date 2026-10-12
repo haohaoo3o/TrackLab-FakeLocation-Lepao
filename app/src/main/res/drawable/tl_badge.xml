@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TL 徽标：tl_badge_bg 底 + 1dp tl_line 边 + 4dp 左轨 tl_accent（单色：浅黑轨/深白轨）。
+     文字色由布局覆写 tl_ink_strong。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tl_badge_bg" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="@color/tl_line" />
+        </shape>
+    </item>
+    <item android:left="0dp" android:right="0dp" android:top="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tl_accent" />
+        </shape>
+    </item>
+</layer-list>

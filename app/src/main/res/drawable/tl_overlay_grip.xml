@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗拖拽抓手（单色化 2026-10-12）：2×20dp 中性圆头条 #B5B5B5。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#B5B5B5" />
+    <corners android:radius="999dp" />
+</shape>

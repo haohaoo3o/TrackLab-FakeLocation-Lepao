@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗合规标记格底（单色化 2026-10-12）：纯黑底 #000000 + 1dp 黑描边 + 6dp 圆角。
+     文字恒为合规标记串（"测试"/"TEST"），文字色由布局指定为纯白 #FFFFFF（黑底白字，21.00:1）；
+     合规身份由文字 + 最高反差承担；深色反转见 drawable-night/tl_overlay_badge.xml。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#000000" />
+    <corners android:radius="6dp" />
+    <stroke android:width="1dp" android:color="#000000" />
+</shape>

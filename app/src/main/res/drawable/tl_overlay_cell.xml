@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 展开态指标格底（单色化 2026-10-12）：实底 #E4E4E4（= tl_surface_2）+ 10dp 圆角，无描边。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#E4E4E4" />
+    <corners android:radius="10dp" />
+</shape>

@@ -152,4 +152,13 @@
     <string name="matrix_state_playing">回放中</string>
     <string name="matrix_state_stopped">已停止</string>
     <string name="matrix_tab_cd">切换面板：%1$s</string>
+
+    <!-- 1.0：TL 焕新界面新增键 -->
+    <string name="tl_app_title">TrackLab</string>
+    <string name="tl_sec_edit">轨迹编辑</string>
+    <string name="tl_sec_diag">诊断</string>
+    <string name="tl_cd_start">开始测试回放</string>
+    <string name="tl_cd_pause">暂停或继续测试回放</string>
+    <string name="tl_cd_stop">停止测试回放</string>
+    <string name="matrix_clock_cd">界面时钟（本机挂钟，非事件时刻）</string>
 </resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TL 主键：实底 tl_accent + 白字（浅）/ 深字（深，tl_accent_ink 自适应）。
+     按压 tl_accent_press；禁用 tl_surface_2。8dp 圆角，无 Ripple（selector 实底切换）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tl_surface_2" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tl_accent_press" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/tl_accent" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</selector>

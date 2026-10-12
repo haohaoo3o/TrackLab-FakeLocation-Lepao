@@ -75,7 +75,9 @@ class SmokeTest {
         onView(withId(R.id.test_mode_badge)).check(matches(isDisplayed()))
 
         // ④ 主控三键：isDisplayed + isEnabled + click 无异常
-        // （三键位于 ScrollView 折叠下方——isDisplayed 断言视口内可见矩形非空，须先 scrollTo()。）
+        // （TL 焕新布局：三键在 **L2 全局传输条 matrix_control_bar**——matrix_panel_host
+        //   之后的根直属兄弟节点，恒可见、且**不在任何 ScrollView 内**，故不 scrollTo()。
+        //   断言内容一字不放宽：isDisplayed + isEnabled + click。）
         for (id in listOf(R.id.btn_start, R.id.btn_pause, R.id.btn_stop)) {
             onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed()))
             onView(withId(id)).check(matches(isEnabled()))

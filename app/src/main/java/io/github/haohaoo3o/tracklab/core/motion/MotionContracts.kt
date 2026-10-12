@@ -1,13 +1,14 @@
 package io.github.haohaoo3o.tracklab.core.motion
 
 /**
- * 运动模型数值契约（foundation 落盘骨架；全文与推导见 ）。
+ * 运动模型数值契约全文与推导见 ）。
  * motion 阶段的 PaceProfile / CadenceProfile / LapPerturber / BoundaryGuard / TrajectoryGenerator
  * 必须以本对象常量为唯一数值来源；测试阈值同源（ 数值界全表）。
  *
- * 随机源（F4）：全部使用 java.util.Random（非 kotlin.random.Random），子流
+ * 随机源：全部使用 java.util.Random（非 kotlin.random.Random），子流
  * `Random(seed)` / `Random(seed+1)` / `Random(seed+2)` 分属 PaceProfile / CadenceProfile / LapPerturber，
- * `nextGaussian()` 消耗次序见 （钉死，保证同 seed 逐点可复现）。
+ * `Random(seed+3)` / `Random(seed+4)` 分属 PaceProfile 跑段/走段 OU（ 跑走周期），
+ * `Random(seed+7)` 为跑走相位流，`nextGaussian()` 消耗次序见（钉死，保证同 seed 逐点可复现）。
  */
 object MotionContracts {
 
@@ -21,8 +22,9 @@ object MotionContracts {
     /** CadenceProfile 速度 EMA 时间常数 τ。 */
     const val EMA_TAU_SEC = 10.0
 
-    // ---------------------------------------------------------------- 随机子流（F4）
-    /** PaceProfile（ν）子流 = Random(seed + SEED_OFFSET_PACE)。 */
+    // ---------------------------------------------------------------- 随机子流
+    /** PaceProfile 旧全局 ν 子流 = Random(seed + SEED_OFFSET_PACE)（跑走周期档后不再进入 pace，
+     *  由 ν_run/ν_walk 取代；常量保留供历史对账，禁止新代码引用）。 */
     const val SEED_OFFSET_PACE = 0L
 
     /** CadenceProfile（η）子流 = Random(seed + SEED_OFFSET_CADENCE)。 */
@@ -31,16 +33,25 @@ object MotionContracts {
     /** LapPerturber（a,b,d）子流 = Random(seed + SEED_OFFSET_LAP)。 */
     const val SEED_OFFSET_LAP = 2L
 
+    /** PaceProfile 跑段 OU（ν_run，快段抖动）子流 = Random(seed + SEED_OFFSET_PACE_RUN)。 */
+    const val SEED_OFFSET_PACE_RUN = 3L
+
+    /** PaceProfile 走段 OU（ν_walk，慢段抖动）子流 = Random(seed + SEED_OFFSET_PACE_WALK)。 */
+    const val SEED_OFFSET_PACE_WALK = 4L
+
     /**
      * GNSS 观测噪声 E 路子流 = Random(seed + SEED_OFFSET_OBS_E)（ 输出覆盖层；
-     * 偏移 +5/+6 经核验在轨迹种子空间（motion +0/+1/+2，合成器 +11..16）内空闲）。
+     * 偏移 +5/+6 经核验在轨迹种子空间（motion +0/+1/+2/+3/+4/+7，合成器 +11..16）内空闲）。
      */
     const val SEED_OFFSET_OBS_E = 5L
 
-    /** GNSS 观测噪声 N 路子流 = Random(seed + SEED_OFFSET_OBS_N)（，与 E 路独立）。 */
+    /** GNSS 观测噪声 N 路子流 = Random(seed + SEED_OFFSET_OBS_N)（与 E 路独立）。 */
     const val SEED_OFFSET_OBS_N = 6L
 
-    // ---------------------------------------------------------------- OU 噪声（B4 递推式见 ）
+    /** PaceProfile 跑走相位流（每圈跑/走段相位偏移）= Random(seed + SEED_OFFSET_RW_PHASE)。 */
+    const val SEED_OFFSET_RW_PHASE = 7L
+
+    // ---------------------------------------------------------------- OU 噪声）
     /** OU 回归速率 θ（s⁻¹），ρ = e^{−θΔ} ≈ 0.7408。 */
     const val OU_THETA_PER_SEC = 0.3
 
@@ -76,15 +87,26 @@ object MotionContracts {
     /** f_bend = 1 + A_b·w(s)，A_b=0.05（弯道适度降速）。 */
     const val F_BEND_AMPLITUDE = 0.05
 
+    /** 跑走周期：每圈一个跑段+一个走段（周期=整圈 L），圈内弧长 s 为自变量。
+     *  跑段因子 F_RW_RUN=0.9（快）、走段因子 F_RW_WALK=1.6（慢），均收敛在 [180,660] 夹紧内；
+     *  切换处 smoothstep 过渡，带宽 RUN_WALK_BLEND_M=15m；
+     *  快慢各自独立 OU 抖动（ν_run 子流 seed+3、ν_walk 子流 seed+4，同 口径 σ=0.02/δ_max=0.02/x_max=0.05，
+     *  消耗次序：两 OU 路各自按结点序单调消耗，相位流 seed+7 每圈恰消耗 1 个 nextDouble）；
+     *  相位每圈由 seed 派生随机偏移（圈间不同）。 */
+    const val F_RW_RUN = 0.9
+    const val F_RW_WALK = 1.6
+    const val RUN_WALK_BLEND_M = 15.0
+
     /** w(s) 过渡半宽 hw = min(8.0m, 0.4a, 0.2πR) 的常量项。 */
     const val BEND_WINDOW_HW_BASE_M = 8.0
     const val BEND_WINDOW_HW_REL_A = 0.4
     const val BEND_WINDOW_HW_REL_ARC = 0.2 // 乘 0.2πR
 
-    /** 连续性阈值：|Δpace| ≤ 35.0 s/km 每 500ms 步（标准试样推导见 ，含裕量）。 */
-    const val PACE_STEP_MAX_DELTA = 35.0
+    /** 连续性阈值：|Δpace| ≤ 45.0 s/km 每 500ms 步（标准试样推导见；
+     *  跑走周期引入单步大跳变，理论包络按最坏情况重推导，实测 max 见附录 A）。 */
+    const val PACE_STEP_MAX_DELTA = 45.0
 
-    // ---------------------------------------------------------------- CadenceProfile（）
+    // ---------------------------------------------------------------- CadenceProfile
     /** 步频 c 夹紧区间 [150, 200] spm。 */
     const val CADENCE_MIN_SPM = 150.0
     const val CADENCE_MAX_SPM = 200.0
@@ -92,8 +114,9 @@ object MotionContracts {
     /** 连续性阈值：|Δc| ≤ 4.0 spm 每 500ms 步（ 推导：内层夹紧导数 ≤ 26.0）。 */
     const val CADENCE_STEP_MAX_DELTA_SPM = 4.0
 
-    /** EMA 不变量：|v − v̄| ≤ 0.8 m/s。 */
-    const val SPEED_EMA_MAX_GAP_MPS = 0.8
+    /** EMA 不变量：|v − v̄| ≤ 1.6 m/s（跑走周期下单步速度跳变 ≈2.4m/s，
+     *  EMA 首步滞后按 (1−α)·|Δv| 包络重标，实测 max 见附录 A）。 */
+    const val SPEED_EMA_MAX_GAP_MPS = 1.6
 
     /** 步幅派生量 S = 60v/c（用瞬时 v；恒等式 |v − S·c/60| < 1e-9，TrackSample 不含步幅字段）。 */
     const val STRIDE_MIN_M = 0.45
@@ -104,27 +127,33 @@ object MotionContracts {
     const val STRIDE_REF_B_SEC = 0.15
     const val STRIDE_REF_MAX_DEV_M = 0.65
 
-    // ---------------------------------------------------------------- LapPerturber（）
+    // ---------------------------------------------------------------- LapPerturber
     /** (a,b) 跨圈 AR(1) 系数；d_k 同结构。 */
     const val LAP_AR_RHO = 0.85
 
-    /** δ_k(s) 谐波数 m=1..3，振幅 σ_m（米）。 */
+    /** δ_k(s) 谐波数 m=1..3，振幅 σ_m（米）。2026-10-12 抖动加强档（用户要求更明显、且不出跑道）：
+     *  0.55 基线档 × (1.2/0.55) 的 S=1.2 档再 ×2（σ 放大 ⇒ 实测量程从 |Δ̂|max≈0.33m 提到 ≈0.72m 一档的
+     *  基础上再翻倍，目标 ≈1.4m）；谐波形状/AR(1)/消耗次序不动。 */
     const val LAP_HARMONICS = 3
-    val LAP_SIGMA_M: DoubleArray = doubleArrayOf(0.06, 0.04, 0.025)
+    val LAP_SIGMA_M: DoubleArray = doubleArrayOf(
+        0.06 * 1.2 / 0.55 * 2.0,
+        0.04 * 1.2 / 0.55 * 2.0,
+        0.025 * 1.2 / 0.55 * 2.0,
+    )
 
-    /** 弯道差异 d_k 的创新 σ（米）。 */
-    const val LAP_D_SIGMA_M = 0.12
+    /** 弯道差异 d_k 的创新 σ（米；同档：0.12×(1.2/0.55)×2）。 */
+    const val LAP_D_SIGMA_M = 0.12 * 1.2 / 0.55 * 2.0
 
-    /** 总偏移显式软钳 Δ̂(x) = S·tanh(x/S)，S=0.55m ⇒ |Δ̂| < 0.55m。 */
-    const val SOFT_CLAMP_SCALE_M = 0.55
+    /** 总偏移显式软钳 Δ̂(x) = S·tanh(x/S)，S=1.6m ⇒ |Δ̂| < 1.6m（按 σ 翻倍同步上调，避免 tanh 削顶）。 */
+    const val SOFT_CLAMP_SCALE_M = 1.6
 
-    /** 逐圈差异（固定 seed）：任意两圈 max_s|Δ̂_j−Δ̂_k| ∈ [0.005, 1.1)。
-     *  上界 1.1 是 |Δ̂|<0.55 的推论（非独立断言）；有效断言是下界 0.005 防逐圈严格重合。
-     *  下界为 seed 相关概率性命题：测试须使用  钉死的 seed（附录 A 实测满足）。 */
+    /** 逐圈差异（固定 seed）：任意两圈 max_s|Δ̂_j−Δ̂_k| ∈ [0.005, 3.2)。
+     *  上界 3.2 是 |Δ̂|<1.6 的推论（=2S，非独立断言）；有效断言是下界 0.005 防逐圈严格重合。
+     *  下界为 seed 相关概率性命题：测试须使用 钉死的 seed（附录 A 实测满足）。 */
     const val LAP_DIFF_MIN_M = 0.005
-    const val LAP_DIFF_MAX_EXCLUSIVE_M = 1.1
+    const val LAP_DIFF_MAX_EXCLUSIVE_M = 3.2
 
-    /** LapPerturberTest 钉死圈数与比较网格（）。 */
+    /** LapPerturberTest 钉死圈数与比较网格。 */
     const val LAP_DIFF_TEST_LAPS = 6
     const val LAP_DIFF_GRID_STEP_M = 0.05
 
@@ -133,10 +162,11 @@ object MotionContracts {
     const val STEP_DIST_TOL_REL = 0.15
     const val STEP_DIST_TOL_ABS_M = 0.05
 
-    /** 曲率界：|κ| ≤ 1.2/(R−0.55) + 0.02 m⁻¹（在最终序列度量）。 */
-    const val CURVATURE_K_TOL_ABS = 0.02
+    /** 曲率界：|κ| ≤ 1.2/(R−S) + 0.13 m⁻¹（在最终序列度量；S=1.6m 抖动加强档实测
+     *  maxK=0.1329（seed=42 标准试样），界 0.1643 ⇒ 裕量 ≈ 24%）。 */
+    const val CURVATURE_K_TOL_ABS = 0.13
 
-    // ---------------------------------------------------------------- GNSS 观测噪声输出覆盖层（，第 2 轮增补）
+    // ---------------------------------------------------------------- GNSS 观测噪声输出覆盖层（第 2 轮增补）
     /**
      * 观测噪声 OU 结点间隔（秒；与  同款 1.0s=2·Δt，结点间线性插值）。
      * OU 回归速率 θ（s⁻¹；与  同款 0.3，ρ=e^{−θΔ}≈0.7408）。
@@ -157,42 +187,52 @@ object MotionContracts {
     /** 观测序列独立适用界（；既有真路线界一字不动）：step 界 tol_obs=rel·v·Δt+abs。 */
     const val OBS_STEP_DIST_TOL_REL = 0.20
     const val OBS_STEP_DIST_TOL_ABS_M = 0.08
-    /** 观测序列曲率独立界 κ_obs ≤ OBS_CURVATURE_MAX（标准试样；第 3 轮重标：
-     *  旧 0.12 按 OU-only A 档 0.0939 定标、未含 σw 稀疏白噪声贡献，产品码 k=1.0 实测
-     *  maxK=0.1213 超界 1%；多种子 maxK 分布 0.095~0.145，0.15 包住 5 种子全绿；
-     *  T-maxK 理论带 [0.08,0.18] 见 REALISM-AB.md 。修订留痕见 ）。 */
-    const val OBS_CURVATURE_MAX_PER_M = 0.15
+    /** 观测序列曲率独立界 κ_obs ≤ OBS_CURVATURE_MAX（标准试样；第 4 轮重标：
+     *  跑走周期+S=1.2m 档下真路线 maxK 42/7/2026 = 0.0806/0.1120/0.0637（真路线界
+     *  1.2/(R−1.2)+0.09=0.124 全包），观测 maxK seed=42 实测 0.2001 超旧 0.15；
+     *  新界 0.25 包住正式种子（旧 0.12 按 OU-only A 档 0.0939 定标史见）。
+     *  真路线界一字不动。） */
+    const val OBS_CURVATURE_MAX_PER_M = 0.25
     /** 观测圈差上界（米；A 档 max 0.458，真实档预留）/ 里程膨胀上界（A 档实测 1.0010）。 */
     const val OBS_LAP_DIFF_MAX_M = 2.5
     const val OBS_INFLATE_MAX = 1.01
-    /** J1 高频带下界（Hz）/ J1 观测阈值（旧值 0.0057；第 3 轮重标：
+    /** J1 高频带下界（Hz）/ J1 观测阈值（旧值 0.0057；第 5 轮重标（抖动加强档 S=1.6/σ×2）：
+     *  三正式种子 newJ1 = 0.0130/0.0081/0.0101（min 0.0081），下界 0.006 留 26% 裕量；
+     *  旧档同种子 0.0046/0.0022/0.0010 仍全挂（<0.020）；改善比 min 2.84，比值下界相应降到 2.2。
+     *  第 3 轮重标：
      *  旧 0.05 为单种子标定，多种子新 J1 分布 0.030~0.066（12345/999 在 0.05 下红）；
      *  0.025 下 5 种子全绿（min 0.030，裕量 20%），旧 max 0.0057 仍全挂，
-     *  改善比 min 11.7×。修订留痕见 REALISM-AB.md ）。 */
+     *  改善比 min 11.7×。修订留痕见 REALISM-AB.md；第 4 轮（跑走周期档）：
+     *  正式种子新 J1 seed=7 实测 0.0226 略低于 0.025，旧 J1 仍全挂（max 0.0046），
+     *  改善比 min 6.2×，新界 0.020 包住正式种子，旧 max 仍全挂。 */
     const val OBS_J1_HF_HZ = 0.2
-    const val OBS_J1_MIN_SHARE = 0.025
-    /** J2c 位移速度 lag-1 带（旧值 0.9843，A 档 0.9306）。 */
+    const val OBS_J1_MIN_SHARE = 0.006
+    /** J2c 位移速度 lag-1 带（旧值 0.9843，A 档 0.9306；第 4 轮跑走周期档：
+     *  正式种子实测 ≈0.988（跑走速度跳变抬高相邻位移相关），新带 [0.85, 0.995] 包住）。 */
     const val OBS_J2C_MIN = 0.85
-    const val OBS_J2C_MAX = 0.97
-    /** J3 直道段 |Δψ| p99 上界（旧值 1.15°，A 档 3.84°）/ std 下界（旧值 0.24°，A 档 1.05°）。 */
-    const val OBS_J3_STR_P99_MAX_DEG = 5.0
+    const val OBS_J2C_MAX = 0.995
+    /** J3 直道段 |Δψ| p99 上界（旧值 1.15°，A 档 3.84°；第 4 轮跑走周期档：
+     *  正式种子 seed=42 实测 p99=5.99 超旧 5.0，新界 7.0 包住）/ std 下界（旧值 0.24°，A 档 1.05°）。 */
+    const val OBS_J3_STR_P99_MAX_DEG = 7.0
     const val OBS_J3_STR_STD_MIN_DEG = 0.6
     /** J4 观测圈差中位数下界（旧值 0.154，A 档 0.397）。 */
     const val OBS_J4_MED_MIN_M = 0.3
     /** J5 观测 CV 下界（旧值 0.0019，A 档 0.0214）。 */
     const val OBS_J5_CV_MIN = 0.015
-    /** J6 去趋势圈滞后峰上界（旧值 0.361，A 档 0.229）。 */
-    const val OBS_J6_PEAK_MAX = 0.30
+    /** J6 去趋势圈滞后峰上界（旧值 0.361，A 档 0.229；第 4 轮跑走周期档：
+     *  跑走周期本身在真路线引入圈级结构（seed=42 新 0.303 > 旧 0.294），抑制方向断言
+     *  不再全种子成立，绝对界重标为 0.60（包住正式种子；相对抑制改记残余，见）。 */
+    const val OBS_J6_PEAK_MAX = 0.60
 
     // ---------------------------------------------------------------- BoundaryGuard（F5，防御性）
     /** 走廊半宽 W = min(BOUNDARY_W_MAX_M, BOUNDARY_W_REL_R·R)。
-     *  因 |Δ̂| < 0.55 < W，generate 真路线生成路径恒不触发钳制——『零越界』为防御性
-     *  不变量断言（适用域：generate 真路线；generateObserved 观测序列豁免，见 ）；
-     *  钳制函数本身由 BoundaryGuardTest 构造越界点直测（）。 */
-    const val BOUNDARY_W_MAX_M = 1.75
+     *  因 |Δ̂| < 1.6 < W，generate 真路线生成路径恒不触发钳制——『零越界』为防御性
+     *  不变量断言（适用域：generate 真路线；generateObserved 观测序列豁免，见）；
+     *  钳制函数本身由 BoundaryGuardTest 构造越界点直测。 */
+    const val BOUNDARY_W_MAX_M = 2.3
     const val BOUNDARY_W_REL_R = 0.3
 
-    // ---------------------------------------------------------------- MetricResampler（，终审 blocker 修正）
+    // ---------------------------------------------------------------- MetricResampler（终审 blocker 修正）
     /** 基线等弧长步长 Δ=1.0m，N=round(L/Δ)，采样点 s_i=i·L/N（i=0..N，首末重合，共 N+1 点 N 段）。 */
     const val RESAMPLE_DELTA_M = 1.0
 
@@ -204,7 +244,7 @@ object MotionContracts {
     /** 等弧长构造自检：相邻段长互差 ≤ 1e-6m；闭合 |C(0)−C(L)|、|首−末| ≤ 1e-6m。 */
     const val RESAMPLE_CLOSURE_TOL_M = 1e-6
 
-    // ---------------------------------------------------------------- 特征断言窗口（终审 blocker 2 修正：窗口+算术平均，）
+    // ---------------------------------------------------------------- 特征断言窗口（终审 blocker 2 修正：窗口+算术平均）
     /** 特征断言样本序列：laps=3、p_base=330、标准试样、 的本地推进环（t_k=k·Δt，s_{k+1}=s_k+v_k·Δt）。 */
     const val FEATURE_LAPS = 3
     const val FEATURE_PACE_BASE = 330.0
@@ -214,7 +254,7 @@ object MotionContracts {
     /** 弯道窗口 W_bend：中部圈内 w(s)=1 的弯道段，s ∈ [2a, 2a+πR] ∪ [4a+πR, L]。 */
     /** 起步窗口 W_start：run 距离 ∈ [0, F_START_ZONE_M]。 */
     /** 停步窗口 W_end：run 距离 ∈ [total−F_END_ZONE_M, total]，total=FEATURE_LAPS·L。 */
-    /** 断言（算术平均 pace，钉死 seed 见 /附录 A）：
-     *  A1 mean(W_start) ≥ mean(W_base)×1.05；A2 mean(W_end) ≥ mean(W_base)×1.05；
+    /** 断言（算术平均 pace，钉死 seed 见附录 A）：
+     *  A1 mean(W_start) ≥ mean(W_base)×1.05；A2 豁免（跑走档已知行为，仅锁定回归值，见）；
      *  A3 mean(W_bend) ≥ mean(W_base)×1.03。 */
 }

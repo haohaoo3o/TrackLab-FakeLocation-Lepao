@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TL 页签文本：未选中 tl_ink_sub；选中 tl_accent（换色+底线，不缩放）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_activated="true" android:color="@color/tl_accent" />
+    <item android:color="@color/tl_ink_sub" />
+</selector>

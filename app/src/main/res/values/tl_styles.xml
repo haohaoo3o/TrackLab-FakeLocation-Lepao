@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab TL 组件样式（焕新）：基于 AppCompat，不引入新依赖。
+     四变体：Primary / Chip（含 Ghost 口径）/ Transport / Tab；输入 Edit；文本族。
+     命名全新 tl_ 前缀，不沿用 matrix_/v2_。 -->
+<resources>
+    <style name="Widget.TrackLab.TlButton" parent="Widget.AppCompat.Button">
+        <item name="android:background">@drawable/tl_btn_chip</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/tl_btn_text</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlButton.Primary">
+        <item name="android:background">@drawable/tl_btn_primary</item>
+        <item name="android:textColor">@color/tl_btn_primary_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlButton.Transport">
+        <item name="android:background">@drawable/tl_btn_chip</item>
+        <item name="android:textColor">@color/tl_btn_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:drawablePadding">2dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlButton.Transport.Primary">
+        <item name="android:background">@drawable/tl_btn_primary</item>
+        <item name="android:textColor">@color/tl_btn_primary_text</item>
+        <item name="android:drawablePadding">2dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlButton.Tab">
+        <item name="android:background">@drawable/tl_tab</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/tl_tab_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">14dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlButton.Chip">
+        <item name="android:background">@drawable/tl_btn_chip</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/tl_btn_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="android:drawablePadding">8dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlEdit" parent="Widget.AppCompat.EditText">
+        <item name="android:background">@drawable/tl_field</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:textColorHint">@color/tl_ink_sub</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:typeface">monospace</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:minHeight">48dp</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText" parent="" />
+
+    <style name="Widget.TrackLab.TlText.Label">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/tl_ink_sub</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.PanelLabel">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.Section">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/tl_ink_sub</item>
+        <item name="android:letterSpacing">0.10</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.Disclaimer">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/tl_ink_sub</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.MonoEvent">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:lineSpacingMultiplier">1.35</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:breakStrategy">simple</item>
+        <item name="android:hyphenationFrequency">none</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.MonoBoard">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.45</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:breakStrategy">simple</item>
+        <item name="android:hyphenationFrequency">none</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.MonoGroup">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:lineSpacingMultiplier">1.30</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.MonoMetrics">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/tl_ink_strong</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="Widget.TrackLab.TlText.MonoClock">
+        <item name="android:typeface">monospace</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/tl_ink_sub</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+</resources>

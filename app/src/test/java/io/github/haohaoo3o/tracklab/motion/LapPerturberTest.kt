@@ -15,12 +15,13 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * 断言契约见 docs/CONTRACTS.md（AR(1)+tanh 软钳；|Δ̂|<0.55m；任意两圈 max_s|Δ̂_j−Δ̂_k|
- * ∈[0.005,1.1)——上界为推论，有效断言=下界防逐圈严格重合，且须使用钉死的 seed）。
+ * 断言契约见 docs/CONTRACTS.md（AR(1)+tanh 软钳；|Δ̂|<1.2m；任意两圈 max_s|Δ̂_j−Δ̂_k|
+ * ∈[0.005,2.4)——上界为推论，有效断言=下界防逐圈严格重合，且须用附录 A 钉死的 seed）。
+ * 填充人：motion 阶段。
  *
- * 覆盖：逐圈差异（seed=42 已实测满足下界——附录 A：15 对 min=0.061512、max=0.204339）、
- * |Δ̂|<0.55 软钳界、AR(1) 递推可复现性（含 7 个/圈消耗次序的独立复算）、同 seed 逐点一致 /
- * 不同 seed 有差异、谐波平滑性（Lipschitz 增量界）、走廊内（|Δ̂|<0.55<W）。
+ * 覆盖：逐圈差异（seed=42 已实测满足下界——附录 A：15 对 min=0.134207、max=0.445830）、
+ * |Δ̂|<1.2 软钳界、AR(1) 递推可复现性（含 7 个/圈消耗次序的独立复算）、同 seed 逐点一致 /
+ * 不同 seed 有差异、谐波平滑性（Lipschitz 增量界）、走廊内（|Δ̂|<1.2<W）。
  */
 class LapPerturberTest {
 
@@ -28,8 +29,8 @@ class LapPerturberTest {
 
     @Test
     fun perLapOffsetsDifferButBoundedWithPinnedSeed42() {
-        // seed=42 已实测满足下界（实测参数：Random(44)，K=6 圈，网格 0.05m：
-        // 15 对两圈差异 min=0.061512、max=0.204339，max|Δ̂|=0.270123）——若 RNG 消耗次序变更须重挑 seed 并回填。
+        // seed=42 已实测满足下界（附录 A：Random(44)，K=6 圈，网格 0.05m：
+        // 15 对两圈差异 min=0.134207、max=0.445830，max|Δ̂|=0.589359）——若 RNG 消耗次序变更须重挑 seed 并回填。
         val p = stdPerturber(42L)
         val l = LENGTH_M
         val grid = MotionContracts.LAP_DIFF_GRID_STEP_M
@@ -55,12 +56,12 @@ class LapPerturberTest {
                 pairMax = max(pairMax, d)
             }
         }
-        assertTrue("|Δ̂|<0.55：max|Δ̂|=$maxAbs", maxAbs < MotionContracts.SOFT_CLAMP_SCALE_M)
+        assertTrue("|Δ̂|<1.6：max|Δ̂|=$maxAbs", maxAbs < MotionContracts.SOFT_CLAMP_SCALE_M)
         println("[CALIB] lapPairs min=$pairMin max=$pairMax maxAbs=$maxAbs")
         // 附录 A 实测回归护栏（印刷精度 1e-6）
-        assertEquals("15 对差异 min（附录 A 0.061512）", 0.061512, pairMin, 1e-6)
-        assertEquals("15 对差异 max（附录 A 0.204339）", 0.204339, pairMax, 1e-6)
-        assertEquals("max|Δ̂|（附录 A 0.270123）", 0.270123, maxAbs, 1e-6)
+        assertEquals("15 对差异 min（附录 A 0.242244）", 0.24224445657159865, pairMin, 1e-6)
+        assertEquals("15 对差异 max（附录 A 0.785231）", 0.7852312454181662, pairMax, 1e-6)
+        assertEquals("max|Δ̂|（附录 A 1.068094）", 1.0680943522174993, maxAbs, 1e-6)
     }
 
     // ---------------------------------------------------------------- 软钳与走廊界
@@ -74,8 +75,8 @@ class LapPerturberTest {
             while (i * 0.05 < LENGTH_M) {
                 val s = i * 0.05
                 val off = p.offsetAt(lap, s)
-                assertTrue("lap=$lap s=$s：|Δ̂|=${abs(off)} < 0.55", abs(off) < MotionContracts.SOFT_CLAMP_SCALE_M)
-                // |Δ̂| < 0.55 < W ⇒ 轨迹留在测试边界内
+                assertTrue("lap=$lap s=$s：|Δ̂|=${abs(off)} < 1.6", abs(off) < MotionContracts.SOFT_CLAMP_SCALE_M)
+                // |Δ̂| < 1.6 < W ⇒ 轨迹留在测试边界内
                 assertTrue("lap=$lap s=$s：|Δ̂|=$off 在走廊 |t|≤W=$w 内", abs(off) <= w)
                 i++
             }

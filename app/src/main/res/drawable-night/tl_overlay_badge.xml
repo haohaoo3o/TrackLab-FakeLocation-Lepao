@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗合规标记格底 · 深色（单色化 2026-10-12）：白底 #FFFFFF + 黑字 #000000（21.00:1）。
+     布局 ID/引用名不动，仅按 night 限定符切换。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FFFFFF" />
+    <corners android:radius="6dp" />
+    <stroke android:width="1dp" android:color="#FFFFFF" />
+</shape>

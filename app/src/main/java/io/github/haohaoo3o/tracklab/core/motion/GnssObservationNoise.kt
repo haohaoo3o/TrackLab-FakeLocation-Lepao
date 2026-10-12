@@ -18,7 +18,7 @@ import kotlin.math.sqrt
  *   （实测 firstSampleDiffM=0.0，见 REALISM-AB.md  对账行；非缺陷，为确定性初值）。
  * - 随机源（F4）：E 路 `Random(seed + [MotionContracts.SEED_OFFSET_OBS_E])`（+5）、
  *   N 路 `Random(seed + [MotionContracts.SEED_OFFSET_OBS_N])`（+6）——两路**独立偏移**，
- *   经核验在轨迹种子空间（motion +0/+1/+2，合成器 +11..16）内空闲；每路内部 OU 与白噪声
+ *   经核验在轨迹种子空间（motion +0/+1/+2/+3/+4/+7（含跑走档新增），合成器 +11..16）内空闲；每路内部 OU 与白噪声
  *   共用一路 Random，按「OU 先、每结点 1 个 g；白噪声后、每样本 1 个 g（结点时刻跳过）」
  *   的固定次序消耗（防同 seed 分叉，barrier4）。
  * - 起步收敛包络：`g(t) = min(1, t/[MotionContracts.OBS_SETTLE_SEC])`，乘法叠加在 OU 初值

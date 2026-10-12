@@ -1,6 +1,5 @@
 package io.github.haohaoo3o.tracklab
 
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
@@ -12,9 +11,6 @@ import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.PathInterpolator
-import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,7 +38,6 @@ import io.github.haohaoo3o.tracklab.service.PlaybackUiState
 import io.github.haohaoo3o.tracklab.ui.PermissionGate
 import io.github.haohaoo3o.tracklab.ui.map.MapEditController
 import io.github.haohaoo3o.tracklab.ui.map.MapEditViewModel
-import io.github.haohaoo3o.tracklab.ui.motion.ReducedMotion
 import io.github.haohaoo3o.tracklab.ui.playback.PlaybackRenderer
 import io.github.haohaoo3o.tracklab.ui.privacy.PrivacyGateController
 import kotlinx.coroutines.delay
@@ -51,26 +46,25 @@ import java.io.File
 import java.io.IOException
 
 /**
- * 主界面（F8：`android:exported="true"`）。View ID 表见 docs/CONTRACTS.md §8.1（SmokeTest B8 断言 §11）。
+ * 主界面（F8：`android:exported="true"`）。View ID 表见 docs/CONTRACTS.md（SmokeTest B8 断言）。
  *
  * map 阶段接线：
- * - 隐私三态（§8.4）：NEEDS_CONSENT 显示 `privacy_dialog_root`；NEEDS_KEY 显示 `txt_key_missing`
- *   明确诊断（**不创建 MapView**，未配置 Key 不崩溃）；READY 过合规闸门（§5.7：同意之后、
+ * - 隐私三态（）：NEEDS_CONSENT 显示 `privacy_dialog_root`；NEEDS_KEY 显示 `txt_key_missing`
+ *   明确诊断（**不创建 MapView**，未配置 Key 不崩溃）；READY 过合规闸门（：同意之后、
  *   MapView 创建之前调用 updatePrivacyShow/Agree）后创建 MapView；
- * - 地图点击/长按按固定顺序采集六点（p0 顶部→p5 右上切点，§5.1），编号 Marker、撤销/重置；
- * - **预制跑道线路**（`btn_preset_sufe_wudong`/`btn_preset_standard_400`）：一键载入六点
- *   （内置上财武东路田径场实测坐标 / 标准 400m 放视野中心），六点 Marker 可拖动微调
+ * - 地图点击/长按按固定顺序采集六点（p0 顶部→p5 右上切点），编号 Marker、撤销/重置；
+ * - **预制跑道线路**（`btn_preset_standard_400`）：一键载入六点
+ *   （标准 400m 放地图视野中心），六点 Marker 可拖动微调
  *   （`OnMarkerDragListener` → WGS-84 回写 → 重算拟合），贴合实际跑道后走同一 TrackFitter 校验；
  * - 拟合预览 Polyline（中心线）+ 边界走廊（±W）显示；
- * - 配速与步频范围展示（模型固定界，MotionContracts 同源）、p_base/laps/seed 输入与校验（§8.5）；
+ * - 配速与步频范围展示（模型固定界，MotionContracts 同源）、p_base/laps/seed 输入与校验（）；
  * - 导出 GPX/GeoJSON（应用私有 exports/ 目录，WGS-84，B1 口径）；
- * - 开始测试回放入口（`AppContainer.playbackEntry`，playback 阶段替换实现）。
+ * - 开始测试回放入口（`AppContainer.playbackEntry`替换实现）。
  *
  * SDK 生命周期与 Activity 一一对应（onCreate/onResume/onPause/onDestroy/onLowMemory/onSaveInstanceState）。
- * 界面常驻『测试/模拟定位』标识与测试轨迹声明；不隐藏 mock 标志、不自动控制其他应用（§14）。
- * btn_pause/btn_stop 的回放控制由 playback 阶段接线（本阶段保持 B8 ④：可点、不崩溃）。
+ * 界面常驻『测试/模拟定位』标识与测试轨迹声明；不隐藏 mock 标志、不自动控制其他应用（）。
+ * btn_pause/btn_stop 为回放控制（无会话时可点、无异常、无副作用）。
  *
- * 对抗实验区（docs/CONTRACTS.md §15，`lab_section`）：五档选择（BASELINE/LOCATION_ONLY/
  * ENVIRONMENT_ONLY/SENSORS_ONLY/FULL，默认 FULL）+ 目标版本/模块心跳/各 Hook 组命中/
  * GNSS·计步状态/会话状态展示 + 遥测清零。控制面走既有 Provider 协议（控制端专属），
  * STARTED 期间按推送节流周期刷新。
@@ -93,11 +87,8 @@ class MainActivity : AppCompatActivity() {
     /** 输出一（应用内地图回放）渲染器（MapView 创建后可用；NEEDS_KEY 态为 null，不崩溃）。 */
     private var playbackRenderer: PlaybackRenderer? = null
 
-    /** 权限门（§8.5/§9.2：授权集合 + sdkInt 注入；未授权点『开始』给引导 UI）。 */
+    /** 权限门（：授权集合 + sdkInt 注入；未授权点『开始』给引导 UI）。 */
     private var permissionGate: PermissionGate? = null
-
-    /** 上次观测的 mock 引导态（边沿触发引导文案，避免刷屏）。 */
-    private var lastMockGuidance: Boolean = false
 
     /**
      * Mock 引导残留清除器（R4 实证修复：开始入口 MISSING_MOCK_SELECTION 投机性引导
@@ -119,46 +110,30 @@ class MainActivity : AppCompatActivity() {
     /** MapView 创建前暂存的实例状态（延迟创建场景——同意后建图时转交 MapView.onCreate）。 */
     private var pendingMapState: Bundle? = null
 
-    // ------------------------------------------------ v2 外观层（分段面板 / 控制台 / 装饰动效）
+    // ------------------------------------------------ TL 外观层（页签 / 状态板折叠 / 日志跟随）
     //
-    // 本区块**只做视图装配与样式**：不碰 lab/hook/service 逻辑，不改状态发布时序，
-    // 不改 renderLab / renderLabBoard / collectLabStatus / 回放控制函数出具的事实文案
-    // （控制台的时间列与级别栏是视图层前缀，内容串原样透传，见 §3.7 诚实口径）。
+    // 本区块**只做视图装配与样式**：不碰 service 逻辑，不改状态发布时序，
+    // 不改回放控制函数出具的事实文案
+    // （控制台的时间列与级别栏是视图层前缀，内容串原样透传）。
     //
-    // - 面板：同一 Activity 内 4 个分段面板靠 VISIBLE/GONE 切换（无 Fragment/Dialog/ViewPager2）；
+    // - 同一 Activity 内 4 页靠 VISIBLE/GONE 切换（无 Fragment/Dialog/ViewPager2）；
     //   页签 ID matrix_tab_* 是采集脚本的导航锚点，不得改名；
-    // - 折叠态（控制台观测区 / 状态板整板 / P2 三段 / 地图高度）只存内存，重建即回默认；
-    // - 默认全部「观测可见」：matrix_obs_wrap 展开、lab_section 可见，
-    //   否则 SmokeTest labSectionDefaultFullAndControllerOnlyOperations 会因 GONE 失败；
-    // - 折叠键一律 matrix_* 前缀，绝不新增任何 btn_lab_*（BoundaryNegativeTest 全文件正则钉死八枚）；
-    // - 全部动效在主线程（ValueAnimator/Handler），onStop/onDestroy 与 STOPPED 一律取消；
-    // - 减少动态两级（系统优先）：ReducedMotion.allows()；本开关不越过系统关闭；
-    // - 数字雨/扫描线/角标/侧栏等装饰 clickable=false，不吞 map_container 触摸与焦点。
+    // - 默认页 = 编辑（PANEL_TRACK）：预设/变换/参数/导出全部默认展开、无折叠键；
+    // - 日志页（PANEL_CONSOLE）默认不可见、可经页签进入；状态板整板收起态只存内存；
+    // - 诊断日志只在控制台页展示，主舞台仅保留 HUD + 最新一条事件行；
+    // - 动效只许 300ms 页内淡入（系统减少动态优先），无数字雨/呼吸光/扫描线/脉冲。
 
-    /** 当前分段面板（默认 P1 控制台：日志观测面）。 */
-    private var currentPanel = PANEL_CONSOLE
-
-    /** 地图卡高度两档（0.42 默认 / 0.66 展开）。 */
-    private var mapExpanded = false
+    /** 当前页（默认 P2 编辑：预设/参数首屏直露）。 */
+    private var currentPanel = PANEL_TRACK
 
     /** 状态板整板收起/展开（收起 maxLines=12；既有交互保留）。 */
 
-    /** 数字雨用户意图（默认关；是否真的跑还要看生命周期/回放态/减少动态）。 */
-    private var matrixRainOn = false
-
-    /** 减少动态（应用级；默认关 = 允许动效；只存内存）。 */
-    private var motionDisabled = false
-
-    /** 最近一次回放状态（LED/状态词/时间列都是它驱动；全局恒写，不随页签停更）。 */
+    /** 最近一次回放状态（LED/状态词都是它驱动；全局恒写，不随页签停更）。 */
     private var lastPlaybackState: PlaybackState = PlaybackState.IDLE
 
     private val decorHandler = Handler(Looper.getMainLooper())
-    private var consolePulseAnimator: ValueAnimator? = null
-    private val matrixCursorHandler = decorHandler
-    private var matrixCursorTick: Runnable? = null
-    private var matrixCursorOn = false
 
-    /** 控制台行内容去重表（键 = 视图 ID；§3.5：只在文本变化时写，变化才刷新时间列）。 */
+    /** 控制台行内容去重表（键 = 视图 ID；：只在文本变化时写，变化才刷新时间列）。 */
     private val consoleLastText = HashMap<Int, String>()
 
     /**
@@ -193,9 +168,8 @@ class MainActivity : AppCompatActivity() {
      */
     private var consoleApplyingSnap = false
 
-    /** 指标行最近一次写入的内容与光标态（同值不重绘，§3.5 的 ≤10Hz 限流口径）。 */
+    /** 指标行最近一次写入的内容（同值不重绘，≤10Hz 限流口径）。 */
     private var lastMetricsBase: String? = null
-    private var lastMetricsBlink = false
 
     /** 顶栏状态词最近一次写入内容（同值不重绘）。 */
     private var lastStateText: String? = null
@@ -279,8 +253,6 @@ class MainActivity : AppCompatActivity() {
         initMapIfAllowed()
         refreshTrackUi()
         restorePlaybackIfAny()
-        // am start -n io.github.haohaoo3o.tracklab/.MainActivity --ez lab_probe_start true（启动）
-        // am start -n io.github.haohaoo3o.tracklab/.MainActivity --ez lab_probe_stop true（停止）
         // MainActivity 恒 exported 且为 launcher（边界允许的唯二导出之一），不新增任何组件/按钮。
         collectPlaybackState()
     }
@@ -294,9 +266,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // 界面时钟（本机挂钟）+ 装饰动效按当前事实重算（STARTED 才跑）。
+        // 界面时钟（本机挂钟）+ 顶栏运行态重算（STARTED 才跑）。
         startClock()
-        applyDecorAnimations()
+        applyTopBarState()
     }
 
     override fun onResume() {
@@ -310,7 +282,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        // 全部装饰动效在 onStop() 里 cancel()/removeCallbacks（DESIGN §5.2.2），不碰回放逻辑。
+        // 时钟与 LED 在 onStop() 里复位，不碰回放逻辑。
         stopDecorAnimations()
         super.onStop()
     }
@@ -335,7 +307,7 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    // ---------------------------------------------------------------- 隐私三态（§8.4）
+    // ---------------------------------------------------------------- 隐私三态（）
 
     private fun applyGateUi() {
         binding.privacyDialogRoot.visibility =
@@ -360,10 +332,10 @@ class MainActivity : AppCompatActivity() {
         // 白天底图 + 压暗层（2026-10-10 复审收口 / 第三轮）：上一版曾把底图切成 AMap.MAP_TYPE_NIGHT
         // 来压"整屏最大高饱和面"，真机复审判**反向**——夜间样式实测地图区平均 HSV 饱和度 **0.490**
         // （蓝底 + 亮青标注 + 黄绿跑道）、平均亮度 85，比白天的 0.156 / 215 **更艳**。
-        // 现版：底图回默认白天样式（MAP_TYPE_NORMAL 显式写出，不依赖 SDK 默认值），亮度/彩度交给
-        // 布局里的 matrix_map_dim（40% 黑，声明在 map_container **之后**）压到地图区平均亮度 ≈129、
-        // 平均饱和度 0.156（黑色叠层等比缩放 RGB ⇒ 饱和度不变；见 activity_main.xml 与 colors-matrix.xml）。
-        // 叠加线/点位颜色随之改回 DESIGN §1.1 的"白天档"深色三色（见 MapEditController /
+        // 现版：底图回默认白天样式（MAP_TYPE_NORMAL 显式写出，不依赖 SDK 默认值）。
+        // TL 焕新后不再设整图压暗层（移除 matrix_map_dim），亮度/彩度以白天底图 + 深色叠加线为准
+        // （见 activity_main.xml 与 MapEditController / PlaybackRenderer 的注释与实算）。
+        // 叠加线/点位颜色随之改回 DESIGN 的"白天档"深色三色（见 MapEditController /
         // PlaybackRenderer 的注释与实算）：压暗后的浅色叠加线只剩 ≈1.9:1，深色档 3.1~3.4:1。
         amap.mapType = AMap.MAP_TYPE_NORMAL
         // 2026-10-10 复审收口（SDK 自带地图控件）：高德默认在右下角绘制白色缩放条，在压暗后的
@@ -424,7 +396,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onMapPointSelected(latLng: LatLng) {
-        // 地图口径 GCJ-02 → 状态口径 WGS-84（§5.7）
+        // 地图口径 GCJ-02 → 状态口径 WGS-84（）
         val wgs = CoordTransform.gcj02ToWgs84(LatLon(latLng.latitude, latLng.longitude))
         val added = vm.addPoint(wgs)
         if (!added) {
@@ -462,7 +434,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindButtons() {
-        // 隐私对话框（B2/§8.4）
+        // 隐私对话框（B2/）
         binding.btnPrivacyAgree.setOnClickListener {
             gate.onAgree()
             applyGateUi()
@@ -511,13 +483,13 @@ class MainActivity : AppCompatActivity() {
         binding.btnExportGpx.setOnClickListener { exportTrack(gpx = true) }
         binding.btnExportGeojson.setOnClickListener { exportTrack(gpx = false) }
 
-        // 开始测试回放入口（PlaybackForegroundService 驱动，§7）
+        // 开始测试回放入口（PlaybackForegroundService 驱动）
         binding.btnStart.setOnClickListener { startTestPlayback() }
         // B8 ④ + 回放控制：暂停/继续切换、停止（无会话时可点、无异常、无副作用）
         binding.btnPause.setOnClickListener { togglePauseResume() }
         binding.btnStop.setOnClickListener { stopPlayback() }
 
-        // 连接场景选择（§7.5：仅供本应用 UI/业务测试；不改写系统状态、不影响其他应用）
+        // 连接场景选择（：仅供本应用 UI/业务测试；不改写系统状态、不影响其他应用）
         binding.btnConnDefault.setOnClickListener { selectConnectivity(ConnectivityScenarioRepository.Scenario.DEFAULT) }
         binding.btnConnCellular.setOnClickListener { selectConnectivity(ConnectivityScenarioRepository.Scenario.CELLULAR) }
         binding.btnConnWifi.setOnClickListener { selectConnectivity(ConnectivityScenarioRepository.Scenario.WIFI) }
@@ -543,7 +515,7 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * 4 枚页签 → 4 个分段面板（同一 Activity 内 VISIBLE/GONE 切换；无 Fragment/Dialog/ViewPager2）。
-     * 页签 ID `matrix_tab_*` 是采集脚本的导航锚点（DESIGN §7.7），不得改名。
+     * 页签 ID `matrix_tab_*` 是采集脚本的导航锚点（DESIGN），不得改名。
      */
     private fun bindPanelTabs() {
         binding.matrixTabConsole.setOnClickListener { showPanel(PANEL_CONSOLE) }
@@ -556,13 +528,12 @@ class MainActivity : AppCompatActivity() {
         )) {
             tab.contentDescription = getString(R.string.matrix_tab_cd, getString(labelRes))
         }
-        showPanel(PANEL_CONSOLE)
+        showPanel(PANEL_TRACK)
     }
 
     /**
-     * 切换面板：瞬时 visibility + isActivated（**无动画**，DESIGN §2.4/§5.3#1：面板切换淡入
-     * 已被评估并移除——Espresso 主线程空闲同步会被动画帧拖住，极简设计也不需要）。
-     * 切换后**立即 render 一次**（不依赖 1s 轮询），控件态与观测行立刻与事实一致（§3.5/§7.5）。
+     * 切换页：瞬时 visibility + isActivated（无动画，避免拖住 Espresso 主线程空闲同步）。
+     * 切换后**立即 render 一次**，控件态与观测行立刻与事实一致。
      */
     private fun showPanel(panel: Int) {
         currentPanel = panel
@@ -572,131 +543,22 @@ class MainActivity : AppCompatActivity() {
         binding.matrixTabConsole.isActivated = panel == PANEL_CONSOLE
         binding.matrixTabTrack.isActivated = panel == PANEL_TRACK
         binding.matrixTabMore.isActivated = panel == PANEL_MORE
-        applyDecorAnimations()
+        applyTopBarState()
     }
 
     private fun visible(shown: Boolean): Int = if (shown) View.VISIBLE else View.GONE
 
-    /**
-     * 折叠 / 开关接线（全部纯外观；默认值在各 apply* 的首次调用里写死）：
-     * 控制台观测区、状态板整板、P2 三段、地图高度两档、数字雨、减少动态。
-     * 收起态只存内存，重建即回默认（默认值必须让 SmokeTest 的 lab 用例可点）。
-     */
+    /** TL 视图装配（仅保留项）：日志贴底跟随观测。 */
     private fun bindMatrixUi() {
-        // 控制台级折叠：matrix_obs_wrap（状态板段 + Hook 段 + GNSS）
-
-        // 状态板整板折叠（既有交互保留：点板或提示行，默认收起 maxLines=12）
-
-        // P2 三段折叠（预制段默认展开：采集脚本按 resource-id 点 btn_preset_sufe_wudong）
-        bindSegment(binding.matrixSegPresetBody, binding.matrixSegPresetFold, expanded = true)
-        bindSegment(binding.matrixSegTransformBody, binding.matrixSegTransformFold, expanded = false)
-        bindSegment(binding.matrixSegParamsBody, binding.matrixSegParamsFold, expanded = false)
-
-        // 地图高度两档（改权重 + requestLayout，无动画）
-        applyMapFold()
-        binding.matrixMapFoldBtn.setOnClickListener {
-            mapExpanded = !mapExpanded
-            applyMapFold()
-        }
-
-        // 数字雨 / 减少动态
-        applyMatrixRain()
-        binding.matrixRainToggleBtn.setOnClickListener {
-            matrixRainOn = !matrixRainOn
-            applyMatrixRain()
-        }
-        applyMotionToggle()
-        binding.matrixMotionToggleBtn.setOnClickListener {
-            motionDisabled = !motionDisabled
-            applyMotionToggle()
-        }
-
-        // 控制台贴底跟随的「脱离 / 复位」判据（滚动观测；判据见 onConsoleScrollChanged）
         bindConsoleScrollFollow()
     }
 
-    private fun bindSegment(body: View, foldBtn: Button, expanded: Boolean) {
-        applySegment(body, foldBtn, expanded)
-        foldBtn.setOnClickListener { applySegment(body, foldBtn, body.visibility != View.VISIBLE) }
-    }
 
-    private fun applySegment(body: View, foldBtn: Button, expanded: Boolean) {
-        body.visibility = visible(expanded)
-        val labelRes = if (expanded) R.string.matrix_action_fold else R.string.matrix_action_expand
-        foldBtn.setText(labelRes)
-        foldBtn.contentDescription = getString(labelRes)
-    }
-
-    /** 地图高度两档：改 matrix_map_frame / matrix_panel_host 的权重（0.42↔0.66）+ requestLayout。 */
-    private fun applyMapFold() {
-        val mapWeight = if (mapExpanded) MAP_WEIGHT_EXPANDED else MAP_WEIGHT_DEFAULT
-        (binding.matrixMapFrame.layoutParams as? LinearLayout.LayoutParams)?.let {
-            it.weight = mapWeight
-            binding.matrixMapFrame.layoutParams = it
-        }
-        (binding.matrixPanelHost.layoutParams as? LinearLayout.LayoutParams)?.let {
-            it.weight = 1f - mapWeight
-            binding.matrixPanelHost.layoutParams = it
-        }
-        binding.matrixMapFoldBtn.setImageResource(
-            if (mapExpanded) R.drawable.ic_ui_fold else R.drawable.ic_ui_expand,
-        )
-        binding.matrixMapFoldBtn.contentDescription = getString(
-            if (mapExpanded) R.string.matrix_map_fold else R.string.matrix_map_expand,
-        )
-    }
-
-    private fun applyMatrixRain() {
-        val label = getString(
-            if (matrixRainOn) R.string.matrix_rain_toggle_on else R.string.matrix_rain_toggle_off,
-        )
-        binding.matrixRainView.visibility = visible(matrixRainOn)
-        binding.matrixRainToggleBtn.text = label
-        binding.matrixRainToggleBtn.contentDescription = label
-        binding.matrixRainView.contentDescription = label
-        applyDecorAnimations()
-    }
-
-    private fun applyMotionToggle() {
-        ReducedMotion.userDisabled = motionDisabled
-        val label = getString(
-            if (motionDisabled) R.string.matrix_motion_on else R.string.matrix_motion_off,
-        )
-        binding.matrixMotionToggleBtn.text = label
-        binding.matrixMotionToggleBtn.contentDescription =
-            "${getString(R.string.matrix_motion_cd)} · $label"
-        binding.matrixMotionToggleBtn.isActivated = motionDisabled
-        applyDecorAnimations()
-    }
-
-    // ---------------------------------------------------------------- 装饰动效（主线程、可取消、STOPPED 不跑）
+    // ---------------------------------------------------------------- TL 运行态外观（LED + 状态词，无装饰动效）
 
     /**
-     * 按「回放状态 × 面板 × 生命周期 × 减少动态」重算全部装饰动效的启停（唯一落点）：
-     * - LED 色/光环恒写（顶栏是全局元素，不随页签停更）；呼吸仅 PLAYING；
-     * - 控制台侧栏脉冲 / 回执淡入：仅 PLAYING|PAUSED 且控制台可见；
-     * - 数字雨：用户显式开启 + STARTED + 非 STOPPED + 减少动态未关。
-     * **STOPPED ⇒ 数据照更、画面不动**（§3.5 末 / §5.2.3）。
-     */
-    private fun applyDecorAnimations() {
-        val state = lastPlaybackState
-        val started = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
-        val allows = ReducedMotion.allows()
-        val moving = allows && started && (state == PlaybackState.PLAYING || state == PlaybackState.PAUSED)
-
-        applyTopBarState()
-
-        if (!moving || currentPanel != PANEL_CONSOLE) stopConsolePulse()
-
-        binding.matrixRainView.setRainEnabled(
-            matrixRainOn && allows && started && state != PlaybackState.STOPPED,
-        )
-        refreshMetricsCursor()
-    }
-
-    /**
-     * 顶栏状态词 + LED（**全局恒写**：不随页签停更，否则切页后 LED 会停在旧状态、
-     * 显示与事实不符 —— DESIGN §3.5 闸门表 R3-5）。
+     * 顶栏状态词 + LED（**全局恒写**：不随页签停更，否则切页后 LED 会停在旧状态）。
+     * 呼吸光/脉冲/淡入/光标闪烁已删除；LED 只换色不动形，呼吸恒关（系统减少动态优先）。
      */
     private fun applyTopBarState() {
         val state = lastPlaybackState
@@ -709,19 +571,14 @@ class MainActivity : AppCompatActivity() {
         binding.matrixLedStatus.setState(
             getColor(ledColorRes(state)),
             halo = state == PlaybackState.PLAYING,
-            breathing = ReducedMotion.allows() &&
-                lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) &&
-                state == PlaybackState.PLAYING,
+            breathing = false,
         )
     }
 
-    /** 生命周期退出 / 减少动态：取消全部装饰动效与待执行回调（幂等）。 */
+    /** 生命周期退出：停时钟 + LED 复位 + 移除待执行回调（幂等）。 */
     private fun stopDecorAnimations() {
         stopClock()
         binding.matrixLedStatus.stop()
-        stopConsolePulse()
-        stopMatrixCursor()
-        binding.matrixRainView.setRainEnabled(false)
         decorHandler.removeCallbacks(consoleScrollToBottom)
     }
 
@@ -734,43 +591,15 @@ class MainActivity : AppCompatActivity() {
         decorHandler.removeCallbacks(clockTick)
     }
 
-    /** LED 五态取色（DESIGN §3.2：非文本元素 3:1 门槛）。 */
+    /** LED 五态取色（TL 令牌；非文本元素）。 */
     @ColorRes
     private fun ledColorRes(state: PlaybackState): Int = when (state) {
-        PlaybackState.IDLE -> R.color.matrix_text_secondary
-        PlaybackState.PLAYING -> R.color.matrix_success
-        PlaybackState.PAUSED -> R.color.matrix_warning
-        PlaybackState.STOPPED -> R.color.matrix_text_secondary
-        PlaybackState.COMPLETED -> R.color.matrix_info
+        PlaybackState.IDLE -> R.color.tl_led_idle
+        PlaybackState.PLAYING -> R.color.tl_led_play
+        PlaybackState.PAUSED -> R.color.tl_led_pause
+        PlaybackState.STOPPED -> R.color.tl_led_stop
+        PlaybackState.COMPLETED -> R.color.tl_led_done
     }
-
-    /** 控制台侧栏脉冲：400ms alpha 0.5→1.0→0.5（ease_exit）；下次变化 cancel 并重放（§5.1#2）。 */
-    private fun startConsolePulse() {
-        val state = lastPlaybackState
-        if (state != PlaybackState.PLAYING && state != PlaybackState.PAUSED) return
-        if (currentPanel != PANEL_CONSOLE) return
-        if (!ReducedMotion.allows()) return
-        consolePulseAnimator?.cancel()
-        consolePulseAnimator = ValueAnimator.ofFloat(CONSOLE_BAR_ALPHA, 1f, CONSOLE_BAR_ALPHA).apply {
-            duration = CONSOLE_PULSE_MS
-            interpolator = easeExit()
-            addUpdateListener { binding.matrixConsoleAccentBar.alpha = it.animatedValue as Float }
-            start()
-        }
-    }
-
-    private fun stopConsolePulse() {
-        consolePulseAnimator?.cancel()
-        consolePulseAnimator = null
-        binding.matrixConsoleAccentBar.alpha = CONSOLE_BAR_ALPHA
-    }
-
-    /** 曲线令牌只两个（§5.1 末）：ease_enter(0,0,0.2,1) / ease_exit(0.4,0,1,1)。 */
-    private fun easeEnter() =
-        PathInterpolator(EASE_ENTER_X1, EASE_ENTER_Y1, EASE_ENTER_X2, EASE_ENTER_Y2)
-
-    private fun easeExit() =
-        PathInterpolator(EASE_EXIT_X1, EASE_EXIT_Y1, EASE_EXIT_X2, EASE_EXIT_Y2)
 
     /**
      * 控制台滚动观测：**唯一**维护「用户是否脱离跟随」（[consoleUserDetached]）的地方。
@@ -809,7 +638,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * 贴底跟随的唯一入口（瞬时跳转，不用 smoothScrollTo）。
      *
-     * 跟随判据两条（2026-10-10 真机回归修复；与 DESIGN §3.5「仅当用户已在底部时跟随」同口径）：
+     * 跟随判据两条（2026-10-10 真机回归修复；与 DESIGN「仅当用户已在底部时跟随」同口径）：
      * - **未脱离**：`consoleUserDetached == false` ⇒ 允许把视口吸附到**记录边界**（[consoleSnapOffset]）；
      * - **面板**：只有「当前面板 == 控制台」才吸附（其他页签下控制台不可见，吸附即无谓重绘）。
      *
@@ -840,7 +669,7 @@ class MainActivity : AppCompatActivity() {
      * 返回**不超过 target 的最大边界** ⇒ 视口顶边只可能落在记录起点或记录之间的空白上，
      * 不可能落在某条记录的续行/子行上（复审的「残尾」）。因 target ≤ maxScroll，
      * 视口底边始终被内容覆盖（不会在底部露出空白）。
-     * 手动滚动不吸附（用户自己的位置不动，§3.5）。
+     * 手动滚动不吸附（用户自己的位置不动）。
      */
     private fun consoleSnapOffset(content: ViewGroup, target: Int): Int {
         var snapped = 0
@@ -889,16 +718,16 @@ class MainActivity : AppCompatActivity() {
      * NOT_TESTED→- ；I 为信息/中性观测。
      */
     private enum class ConsoleLevel(val glyph: String, @ColorRes val colorRes: Int) {
-        INFO("I ", R.color.matrix_info),
-        OK("OK", R.color.matrix_success),
-        WARN("W ", R.color.matrix_warning),
-        ERROR("X ", R.color.matrix_error),
-        NONE("- ", R.color.v2_text_tertiary),
+        INFO("I ", R.color.tl_console_info),
+        OK("OK", R.color.tl_console_ok),
+        WARN("W ", R.color.tl_console_warn),
+        ERROR("X ", R.color.tl_console_error),
+        NONE("- ", R.color.tl_console_mute),
     }
 
     /**
      * 事件行（有发生时刻）：`HH:MM:SS  XX content`（8+2+2+1 定长列；续行缩进 12 个半角空格）。
-     * 时间 = **UI 观测到该文本变化的挂钟时刻**，不是事件在服务/模块里发生的时刻（§3.7）；
+     * 时间 = **UI 观测到该文本变化的挂钟时刻**，不是事件在服务/模块里发生的时刻（）；
      * 该列只用于把界面与 logcat 对齐，不参与断言、不落盘、不进导出 JSON。
      */
     private fun eventLine(
@@ -944,6 +773,49 @@ class MainActivity : AppCompatActivity() {
             )
             out.append(hangIndent(line, CONTINUATION_FIELD))
         }
+        return out
+    }
+
+    /**
+     * 观测**记录**（Hook 组，2026-10-10 真机复审修复）：一条记录**显式占两行**，绝不交给系统折行。
+     *
+     * ```
+     * NN I  <head>                        ← 第 1 行：wireName + 命中/错误 计数（lab_group_line）
+     *   · <install> · <gate>              ← 第 2 行：状态 token（lab_group_status_line，更暗）
+     * ```
+     *
+     * 为什么必须显式两行：真机（1080px 屏，行宽实测 1030px）上「21 字符 wireName +
+     * `未安装/未知` + `生效中`」的一条记录宽 1050–1107px > 1030px，**单行放不下**；
+     * 而等宽控制台的 CJK 可在任意两字之间断行 ⇒ 复审看到「行末『生效』/ 下一行『中』」。
+     * 拆成两行后每行都有余量（见 DESIGN 的字符数算式），且断点由本函数**显式**给出。
+     * 第 2 行用 [R.color.tl_ink_sub]（次级文本，仍过 AA）。
+     */
+    private fun observedRecord(
+        index: String,
+        head: String,
+        status: String,
+        level: ConsoleLevel,
+    ): CharSequence {
+        val out = SpannableStringBuilder()
+        val prefix = observedPrefix(index, level)
+        out.append(prefix)
+        val glyphStart = prefix.length - level.glyph.length - 1
+        out.setSpan(
+            ForegroundColorSpan(getColor(level.colorRes)),
+            glyphStart,
+            glyphStart + level.glyph.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        out.append(hangIndent(head, CONTINUATION_FIELD))
+        out.append('\n').append(CONTINUATION_FIELD)
+        val statusStart = out.length
+        out.append(status)
+        out.setSpan(
+            ForegroundColorSpan(getColor(R.color.tl_ink_sub)),
+            statusStart,
+            out.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
         return out
     }
 
@@ -1066,7 +938,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun consoleIndex(value: Int): String = String.format(java.util.Locale.US, "%02d", value)
 
-    /** 事件行写入：只在内容变化时写，变化即刷新时间列并给出「新行」反馈（§3.5）。 */
+    /** 事件行写入：只在内容变化时写，变化即刷新时间列并给出「新行」反馈（）。 */
     private fun writeEventRow(
         view: TextView,
         text: String,
@@ -1089,83 +961,65 @@ class MainActivity : AppCompatActivity() {
         view.text = observedLine(OBSERVED_INDEX_PLACEHOLDER, wrapped, ConsoleLevel.NONE)
     }
 
-    /** 地图/轨迹状态行（事件行，级别在写入点显式给出——§3.3 级别指派表）。 */
+    /** 地图/轨迹状态行（事件行，级别在写入点显式给出—— 级别指派表）。 */
     private fun writeMapStatus(text: String, level: ConsoleLevel) =
         writeEventRow(binding.txtMapStatus, text, level)
 
-    /** 新行反馈：侧栏脉冲 + 贴底自动滚动。 */
+    /** 新行反馈：贴底自动滚动（脉冲/淡入/光标装饰已删除）。 */
     private fun onConsoleRowsChanged() {
-        startConsolePulse()
         autoScrollConsole()
     }
 
+
+
+    private fun tintBoardWord(spannable: SpannableString, raw: String, word: String, color: Int) {
+        if (word.isEmpty()) return
+        var from = 0
+        while (true) {
+            val hit = raw.indexOf(word, from)
+            if (hit < 0) return
+            spannable.setSpan(
+                ForegroundColorSpan(color),
+                hit,
+                hit + word.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            from = hit + word.length
+        }
+    }
+
+    /** risk/recovery 前缀染色（蓝；只染前缀，正文颜色不动）。 */
+    private fun tintBoardPrefix(spannable: SpannableString, raw: String, prefixTemplate: String) {
+        val prefix = prefixTemplate.substringBefore("%1\$s")
+        if (prefix.isEmpty()) return
+        var from = 0
+        while (true) {
+            val hit = raw.indexOf(prefix, from)
+            if (hit < 0) return
+            spannable.setSpan(
+                ForegroundColorSpan(getColor(R.color.tl_console_info)),
+                hit,
+                hit + prefix.length,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            from = hit + prefix.length
+        }
+    }
+
     /**
-     * 闪烁光标：txt_playback_metrics 后缀 `▌` + 530ms alpha 阶跃（只闪 alpha 不改色，
-     * 避免与分级语义冲突）。仅在 **PLAYING ∧ 控制台可见 ∧ STARTED ∧ 减少动态未关** 时闪（§5.1#6）；
-     * PAUSED/STOPPED/切页/onStop/onDestroy/减少动态 ⇒ 移除后缀并停闪。
-     * 同值不重绘（§3.5：指标行写入限流，newText == lastText 直接 return）。
+     * 指标行写入：同值不重绘（≤10Hz 限流）；闪烁光标已删除（减少动态与可读性）。
      */
     private fun applyMatrixCursor(base: String) {
-        val blink = lastPlaybackState == PlaybackState.PLAYING &&
-            currentPanel == PANEL_CONSOLE &&
-            lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) &&
-            ReducedMotion.allows()
-        if (lastMetricsBase == base && lastMetricsBlink == blink) return
+        if (lastMetricsBase == base) return
         lastMetricsBase = base
-        lastMetricsBlink = blink
-        stopMatrixCursor()
-        if (!blink) {
-            binding.txtPlaybackMetrics.text = base
-            return
-        }
-        binding.txtPlaybackMetrics.text = "$base ▌"
-        matrixCursorOn = true
-        val tick = object : Runnable {
-            override fun run() {
-                if (!matrixCursorOn) return
-                binding.txtPlaybackMetrics.alpha = if (binding.txtPlaybackMetrics.alpha > 0.5f) 0.35f else 1.0f
-                matrixCursorHandler.postDelayed(this, CURSOR_BLINK_MS)
-            }
-        }
-        matrixCursorTick = tick
-        matrixCursorHandler.postDelayed(tick, CURSOR_BLINK_MS)
-    }
-
-    /** 面板/状态/生命周期变化后重算光标态（不改内容，只重放或停闪）。 */
-    private fun refreshMetricsCursor() {
-        val base = lastMetricsBase ?: return
-        lastMetricsBase = null
-        applyMatrixCursor(base)
-    }
-
-    private fun stopMatrixCursor() {
-        matrixCursorOn = false
-        matrixCursorTick?.let { matrixCursorHandler.removeCallbacks(it) }
-        matrixCursorTick = null
         binding.txtPlaybackMetrics.alpha = 1.0f
+        binding.txtPlaybackMetrics.text = base
     }
 
-    // ---------------------------------------------------------------- 对抗实验区（docs/CONTRACTS.md §15）
 
-    /** 上次已展示的探针回执（边沿触发，避免周期刷新把回执行来回覆盖）。 */
 
-    /** 上次已展示的档位/清零回执（边沿触发：只在回执变化时写状态行，避免周期刷新互相覆盖）。 */
 
-    // ---------------------------------------------------------------- v4.3.0 状态板（07-ui）
 
-    /** 表单 → ViewModel（§8.5 校验）；返回是否全部合法。 */
-    private fun applyInputsFromForm(): Boolean {
-        val error = vm.applyInputs(
-            binding.editPBase.text?.toString().orEmpty(),
-            binding.editLaps.text?.toString().orEmpty(),
-            binding.editSeed.text?.toString().orEmpty(),
-        )
-        if (error != MapEditViewModel.InputError.NONE) {
-            writeMapStatus(getString(errorTextRes(error)), ConsoleLevel.ERROR)
-            return false
-        }
-        return true
-    }
 
     private fun errorTextRes(error: MapEditViewModel.InputError): Int = when (error) {
         MapEditViewModel.InputError.P_BASE -> R.string.error_invalid_p_base
@@ -1274,13 +1128,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** p0..p5 标题（§5.1 固定命名）。 */
+    /** p0..p5 标题（ 固定命名）。 */
     private fun pointTitles(): List<String> {
         val names = listOf(
             R.string.point_name_p0, R.string.point_name_p1, R.string.point_name_p2,
             R.string.point_name_p3, R.string.point_name_p4, R.string.point_name_p5,
         )
         return names.mapIndexed { i, res -> getString(R.string.point_title_format, i, getString(res)) }
+    }
+
+    /** 三项输入（p_base/laps/seed）即时校验提交；非法输入写状态行并返回 false。 */
+    private fun applyInputsFromForm(): Boolean {
+        val error = vm.applyInputs(
+            binding.editPBase.text?.toString().orEmpty(),
+            binding.editLaps.text?.toString().orEmpty(),
+            binding.editSeed.text?.toString().orEmpty(),
+        )
+        if (error != MapEditViewModel.InputError.NONE) {
+            writeMapStatus(getString(errorTextRes(error)), ConsoleLevel.ERROR)
+            return false
+        }
+        return true
     }
 
     // ---------------------------------------------------------------- 导出（应用私有目录，无额外权限）
@@ -1309,7 +1177,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ---------------------------------------------------------------- 测试回放入口（§7/§8.5）
+    // ---------------------------------------------------------------- 测试回放入口（）
 
     private fun startTestPlayback() {
         if (!applyInputsFromForm()) return
@@ -1318,7 +1186,7 @@ class MainActivity : AppCompatActivity() {
             writeMapStatus(getString(R.string.error_no_track), ConsoleLevel.ERROR)
             return
         }
-        // 权限门（§8.5）：缺运行时权限 → 引导 UI + 发起申请；模拟位置应用未选中 → 引导 UI（回放继续）。
+        // 权限门（）：缺运行时权限 → 引导 UI + 发起申请；模拟位置应用未选中 → 引导 UI（回放继续）。
         val gate = appContainer.permissionCoordinator.createGate(
             mockSelected = permissionGate?.mockSelected ?: false,
         )
@@ -1370,7 +1238,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 进程重建安全恢复（§7.4/B3）：快照 → [PlaybackStateMachine.fromSnapshot] → **一律 PAUSED
+     * 进程重建安全恢复（）：快照 → [PlaybackStateMachine.fromSnapshot] → **一律 PAUSED
      * （不自动续跑）**，恢复累计值展示；快照损坏 → 明确诊断、清快照、不崩溃。
      */
     private fun restorePlaybackIfAny() {
@@ -1395,7 +1263,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** F10/§7.6：`repeatOnLifecycle(STARTED)` 收集 PlaybackBus（指标/按钮态/mock 引导/地图回放）。 */
+    /** F10/：`repeatOnLifecycle(STARTED)` 收集 PlaybackBus（指标/按钮态/mock 引导/地图回放）。 */
     private fun collectPlaybackState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -1416,19 +1284,18 @@ class MainActivity : AppCompatActivity() {
             PlaybackMetricsFormat.pace(ui.paceSecPerKm),
             PlaybackMetricsFormat.cadence(ui.cadenceSpm),
         )
-        // 指标行：同值不重绘（§3.5 ≤10Hz 限流）；光标仅 PLAYING 且控制台可见时闪（§5.1#6）。
-        // 文本口径不变，仍是 overlay_metrics_format 同源。
+        // 指标行：同值不重绘（≤10Hz 限流）；文本口径不变，仍是 overlay_metrics_format 同源。
         applyMatrixCursor(base)
-        applyDecorAnimations()
+        applyTopBarState()
         binding.btnPause.setText(if (ui.state == PlaybackState.PAUSED) R.string.action_resume else R.string.action_pause)
-        // 回放控制三键的图标随状态切换（DESIGN §2.6 R3-2：两个独立字形，不存在合成资源名）。
+        // 回放控制三键的图标随状态切换（DESIGN R3-2：两个独立字形，不存在合成资源名）。
         binding.btnPause.setCompoundDrawablesWithIntrinsicBounds(
             0,
             if (ui.state == PlaybackState.PAUSED) R.drawable.ic_ui_play else R.drawable.ic_ui_pause,
             0,
             0,
         )
-        // mock 引导（§8.5 + R4 实证修复）：GUIDANCE 上升沿写 mock_location_guide；
+        // mock 引导（ + R4 实证修复）：GUIDANCE 上升沿写 mock_location_guide；
         // 投机性残留（开始入口 MISSING_MOCK_SELECTION 已展示、随后服务 ACTIVE 恢复推帧）
         // 经 MockGuideResolver 清除回 map_hint_playback_requested；其余帧不写屏。
         // 试探结果回灌权限门（公开 API 无查询接口，由推帧 side-channel 驱动）。
@@ -1438,7 +1305,6 @@ class MainActivity : AppCompatActivity() {
             "map_hint_playback_requested" ->
                 writeMapStatus(getString(R.string.map_hint_playback_requested), ConsoleLevel.INFO)
         }
-        lastMockGuidance = ui.mockGuidance
         if (ui.sessionActive) {
             permissionGate?.onMockSelectionChanged(!ui.mockGuidance)
         }
@@ -1477,49 +1343,21 @@ class MainActivity : AppCompatActivity() {
          *  一条记录显式占两行（计数行 + 状态子行）⇒ 视图 maxLines = 12 × 2 = 24（见 activity_main.xml）。 */
         private const val CONSOLE_GROUPS_MAX_LINES = 12
 
-        /** 闪烁光标周期（ms，§5.1#6 cursor_blink）。 */
-        private const val CURSOR_BLINK_MS = 530L
+        // ---- 页序号 ----
 
-        // ---- 分段面板 / 折叠 ----
-
-        /** 面板序号（页签顺序 = 控制台 / 跑道 / 实验 / 更多）。 */
-        private const val PANEL_CONSOLE = 0
-        private const val PANEL_TRACK = 1
-        private const val PANEL_MORE = 3
-
-        /** 地图卡高度两档（权重；宿主面板取 1−x，两者之和恒 1.0）。 */
-        private const val MAP_WEIGHT_DEFAULT = 0.42f
-        private const val MAP_WEIGHT_EXPANDED = 0.66f
-
-        // ---- 动效（DESIGN §5.1，全部主线程、可取消） ----
-
-        /** 控制台侧栏静态 alpha（0.5 ⇒ 等效 ≈17.5%；脉冲峰值 1.0）。 */
-        private const val CONSOLE_BAR_ALPHA = 0.5f
-
-        /** 侧栏脉冲时长（ms，#2）。 */
-        private const val CONSOLE_PULSE_MS = 400L
-
-        /** 新回执进场淡入时长（ms，#3）。 */
-
-        /** 新回执进场位移（dp，#3 的「位移」分量，归位到 0）。 */
+        /** 页序号（页签顺序 = 编辑 / 实验 / 诊断 / 日志）。 */
+        private const val PANEL_TRACK = 0
+        private const val PANEL_LAB = 1
+        private const val PANEL_MORE = 2
+        private const val PANEL_CONSOLE = 3
 
         /** 界面时钟步长（ms；本机挂钟，非事件时刻）。 */
         private const val CLOCK_TICK_MS = 1000L
 
-        /** 贴底判定的容差（dp，§3.5 自动滚动）。 */
+        /** 贴底判定的容差（dp，自动滚动）。 */
         private const val CONSOLE_STICKY_BOTTOM_DP = 24f
 
-        /** 曲线令牌（§5.1 末）：ease_enter(0,0,0.2,1) / ease_exit(0.4,0,1,1)。 */
-        private const val EASE_ENTER_X1 = 0f
-        private const val EASE_ENTER_Y1 = 0f
-        private const val EASE_ENTER_X2 = 0.2f
-        private const val EASE_ENTER_Y2 = 1f
-        private const val EASE_EXIT_X1 = 0.4f
-        private const val EASE_EXIT_Y1 = 0f
-        private const val EASE_EXIT_X2 = 1f
-        private const val EASE_EXIT_Y2 = 1f
-
-        // ---- 控制台列宽（§3.1：列对齐靠字符数，不用 padding） ----
+        // ---- 控制台列宽（列对齐靠字符数，不用 padding） ----
 
         /** 事件行续行缩进（等宽半角空格 = 8 + 1 + 2 + 1）。 */
         private const val CONTINUATION_EVENT = "            "

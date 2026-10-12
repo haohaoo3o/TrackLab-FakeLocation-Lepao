@@ -16,13 +16,13 @@ import kotlin.math.abs
 import kotlin.math.max
 
 /**
- * 断言契约（管线次序；java.util.Random(seed)/(seed+1)/(seed+2) 子流——
- * 同 seed 逐点一致、不同 seed 有差异；间距/曲率界度量口径）：本测试补『导出点序与
- * TrajectoryGenerator.generate 输出一致』集成断言（导出器已存在）。
+ * 断言契约见 docs/CONTRACTS.md（管线次序；java.util.Random 子流——
+ * 同 seed 逐点一致、不同 seed 有差异；间距/曲率界度量口径）与（B1：本测试补『导出点序与
+ * TrajectoryGenerator.generate 输出一致』集成断言——导出器在 geometry 阶段已存在）。填充人：motion 阶段。
  *
  * 覆盖（标准试样、laps=3、p_base=330、seed=42）：Δt=0.5s 钉死与恒等式 |pace−1000/v|<1e-9；
- * 范围（pace∈[180,660]、c∈[150,200]、v>0 禁负速度）；连续性（|Δpace|≤35.0、|Δc|≤4.0）；
- * 相邻样本距离 |d − v·Δt| ≤ 0.15·v·Δt+0.05（重采样输出度量）；曲率 |κ| ≤ 1.2/(R−0.55)+0.02（最终序列度量）；
+ * 范围（pace∈[180,660]、c∈[150,200]、v>0 禁负速度）；连续性（|Δpace|≤45.0、|Δc|≤4.0）；
+ * 相邻样本距离 |d − v·Δt| ≤ 0.15·v·Δt+0.05（重采样输出度量）；曲率 |κ| ≤ 1.2/(R−1.2)+0.09（最终序列度量）；
  * 逐圈轨迹不严格重合（max_s|Δ̂_j−Δ̂_k| ≥ 0.005）且留在测试边界内（|t|≤W）；可复现性（同 seed 逐点一致、
  * 不同 seed 有差异）；导出一致性（GPX/GeoJSON 点序 = generate 输出序）。
  */
@@ -128,7 +128,7 @@ class TrajectoryGeneratorTest {
             val p2 = model.toEnu(LatLon(samples[i + 1].latitudeDeg, samples[i + 1].longitudeDeg))
             val k = mengerCurvature(p0, p1, p2)
             maxK = max(maxK, k)
-            assertTrue("i=$i：|κ|=$k ≤ 1.2/(R−0.55)+0.02=$bound", k <= bound + 1e-12)
+            assertTrue("i=$i：|κ|=$k ≤ 1.2/(R−S)+tol=$bound", k <= bound + 1e-12)
         }
         assertTrue("曲率非平凡（max|κ|=$maxK > 0）", maxK > 0.0)
         println("[CALIB] maxMengerCurvature=$maxK bound=$bound")
@@ -143,7 +143,7 @@ class TrajectoryGeneratorTest {
         return 2.0 * area2 / (a * b * c)
     }
 
-    // ---------------------------------------------------------------- 可复现性（子流 seed/seed+1/seed+2）
+    // ---------------------------------------------------------------- 可复现性（：子流划分见）
 
     @Test
     fun sameSeedReproducesPointwiseDifferentSeedDiffers() {
@@ -209,7 +209,7 @@ class TrajectoryGeneratorTest {
                     "圈 $lapJ vs $lapK：max_s|t_j−t_k|=$d ≥ ${MotionContracts.LAP_DIFF_MIN_M}（不得逐圈严格重合）",
                     d >= MotionContracts.LAP_DIFF_MIN_M
                 )
-                assertTrue("圈 $lapJ vs $lapK：差异上界 < 1.1", d < MotionContracts.LAP_DIFF_MAX_EXCLUSIVE_M)
+                assertTrue("圈 $lapJ vs $lapK：差异上界 < 2.4", d < MotionContracts.LAP_DIFF_MAX_EXCLUSIVE_M)
             }
         }
     }

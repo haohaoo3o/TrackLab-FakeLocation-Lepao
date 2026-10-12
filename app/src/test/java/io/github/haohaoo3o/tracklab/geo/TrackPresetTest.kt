@@ -16,8 +16,8 @@ import kotlin.math.abs
 /**
  * 预制跑道线路断言（TrackPreset / TrackPresetLibrary；纯 JVM，无 Android 依赖）。
  *
- * 契约口径与 docs/CONTRACTS.md §2.1–§2.5 同源：
- * - 六点顺序固定 p0..p5，恰落在 §2.5 残差槽位 ⇒ TrackFitter 零残差必过、a/R 原值恢复；
+ * 契约口径与 docs/CONTRACTS.md– 同源：
+ * - 六点顺序固定 p0..p5，恰落在 残差槽位 ⇒ TrackFitter 零残差必过、a/R 原值恢复；
  * - u 方位角（headingDeg，自北顺时针）经 fitter 反解的 u/n 基逐一核对（模 180°）；
  * - 整体变换（平移/缩放/旋转）保持几何性质且仍可零残差拟合；
  * - 标准 400m 工厂可放置到任意中心。
@@ -34,13 +34,13 @@ class TrackPresetTest {
         val preset = TrackPreset("t", LatLon(30.0500, 110.0500), stdA, stdR, 181.0)
         val pts = preset.sixPoints()
 
-        // §2.1 固定顺序 6 点；预制 ⇒ fitter 零残差必过（不会抛 IllegalArgumentException）
+        // 固定顺序 6 点；预制 ⇒ fitter 零残差必过（不会抛 IllegalArgumentException）
         val model = TrackFitter.fit(pts)
         assertEquals(stdA, model.a, 1e-6)
         assertEquals(stdR, model.r, 1e-6)
         assertEquals(4.0 * stdA + 2.0 * PI * stdR, model.lengthM, 1e-6)
 
-        // 槽位落点核对：p5 在 s=0、p0 在 s=a、p1 在 s=2a（§2.5 表，ENU 平面）
+        // 槽位落点核对：p5 在 s=0、p0 在 s=a、p1 在 s=2a（ 表，ENU 平面）
         val ltp = LocalTangentPlane(preset.center)
         val enu = pts.map { ltp.toEnu2(it) }
         val u = preset.uVec()
@@ -67,6 +67,7 @@ class TrackPresetTest {
             assertEquals("heading=$heading 反解 n 应垂直", 0.0, preset.uVec().dot(model.n), 1e-9)
         }
     }
+
 
     @Test
     fun standard400FactoryPlacesAtGivenCenter() {

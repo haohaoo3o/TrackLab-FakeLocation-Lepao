@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TL 主键文本：tl_accent_ink（单色：浅=白，深=黑，随主题自适应）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="@color/tl_disabled_ink" />
+    <item android:color="@color/tl_accent_ink" />
+</selector>

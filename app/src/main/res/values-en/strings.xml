@@ -151,4 +151,13 @@
     <string name="matrix_state_playing">Playing</string>
     <string name="matrix_state_stopped">Stopped</string>
     <string name="matrix_tab_cd">Switch panel: %1$s</string>
+
+    <!-- 1.0：TL 焕新界面新增键 -->
+    <string name="tl_app_title">TrackLab</string>
+    <string name="tl_sec_edit">Track editing</string>
+    <string name="tl_sec_diag">Diagnostics</string>
+    <string name="tl_cd_start">Start test playback</string>
+    <string name="tl_cd_pause">Pause or resume test playback</string>
+    <string name="tl_cd_stop">Stop test playback</string>
+    <string name="matrix_clock_cd">UI clock (local wall time, not event time)</string>
 </resources>

@@ -66,9 +66,8 @@ class PlaybackRenderer(private val amap: AMap) {
     }
 
     /**
-     * 当前位置标记（自绘，低饱和）：外盘 = [COLOR_TRAVELED] `#4E6E88`，内芯 = `matrix_text_primary` `#E3E9E6`。
-     * 实算（实见值 = 原值 ×0.6，40% 压暗层）：盘 `#2F4252` 对压暗后底图亮部 3.30:1 ✔、
-     * 芯 `#888C8A` 对盘 **5.9:1** ✔（非文本 3:1 门槛）。
+     * 当前位置标记（单色化 2026-10-12）：外盘 = [COLOR_TRAVELED] `#1A1A1A` 近黑，
+     * 内芯 = `#FFFFFF` 纯白。"深盘 + 浅芯"靶心，在明暗底上都成立。
      */
     private fun positionIcon(): Bitmap {
         val bmp = Bitmap.createBitmap(ICON_SIZE_PX, ICON_SIZE_PX, Bitmap.Config.ARGB_8888)
@@ -112,36 +111,27 @@ class PlaybackRenderer(private val amap: AMap) {
     companion object {
 
         /**
-         * 全程路线（计划路径）颜色/宽度/z：`matrix_playback_route` `#4E6E88` 的 40% alpha 虚影
-         * （= DESIGN  的 `matrix_playback_route_ghost` `#664E6E88`，与实迹同色相、靠 alpha 区分）。
-         * 2026-10-10 复审收口（第三轮）：底图回白天样式 + 40% 黑压暗层，虚影实见 ≈`#474F55`
-         * 对压暗后底图亮部 **2.65~2.77:1**——**刻意低于 3:1**：它是"计划路径"底层提示，
-         * 必须可辨但不与实迹抢眼（DESIGN 语义即"虚影"）；实迹实线 3.30:1 压在其上。
+         * 全程路线（计划路径）颜色/宽度/z：`#1A1A1A` 的 40% alpha 虚影
+         * （与实迹同色相、靠 alpha 区分；单色化 2026-10-12）。
+         * 虚影刻意低于实线：它是"计划路径"底层提示，必须可辨但不与实迹抢眼。
          */
-        private const val COLOR_ROUTE = 0x664E6E88.toInt()
+        private const val COLOR_ROUTE = 0x661A1A1A.toInt()
         private const val WIDTH_ROUTE = 10f
         private const val Z_ROUTE = 1f
 
         /**
-         * 已行轨迹颜色/宽度/z：`matrix_playback_route` `#4E6E88`（实线、最粗、z 最高）。
-         * 2026-10-10 复审收口：实见 = ×0.6 = `#2F4252`，对压暗后路线邻域背景中位 `#989898`
-         * **3.60:1** ✔（25% 分位 2.75:1）；原始值对纯白 5.37:1 / 对 `#0A0D0C` 3.63:1（DESIGN  白天档）。
-         * 对照夜间档浅青 `#86AE9A` 压暗后对同一背景仅 2.09:1（不可辨），故本轮换成深色档。
+         * 已行轨迹颜色/宽度/z：`#1A1A1A` 近黑（实线、最粗、z 最高；单色化 2026-10-12）。
          */
-        private const val COLOR_TRAVELED = 0xFF4E6E88.toInt()
+        private const val COLOR_TRAVELED = 0xFF1A1A1A.toInt()
         private const val WIDTH_TRAVELED = 12f
         private const val Z_TRAVELED = 2f
 
         /**
-         * 当前位置标记：尺寸（px）/ 外环描边内缩（px）/ 内芯色。
-         * 2026-10-10 复审收口：外环实心圆 = [COLOR_TRAVELED]（实见 `#2F4252`，对压暗后底图亮部
-         * 3.30:1 ✔）；内芯由"近黑"改为 `matrix_text_primary` `#E3E9E6`（实见 `#888C8A`）——
-         * 压暗会把内部对比度一起压扁，深环+近黑芯实见只剩 1.93:1（环与芯不可分）；
-         * 浅芯对深环实见 **5.9:1** ✔，整体成为"深盘 + 浅芯"靶心，在明暗底上都成立。
+         * 当前位置标记：尺寸（px）/ 外环描边内缩（px）/ 内芯色（单色化 2026-10-12：`#FFFFFF` 纯白）。
          */
         private const val ICON_SIZE_PX = 72
         private const val ICON_STROKE_PX = 4f
-        private const val COLOR_POSITION_CORE = 0xFFE3E9E6.toInt()
+        private const val COLOR_POSITION_CORE = 0xFFFFFFFF.toInt()
 
         /** 跟随缩放。 */
         private const val ZOOM_STREET = 17f

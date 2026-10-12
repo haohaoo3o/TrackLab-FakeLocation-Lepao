@@ -5,22 +5,22 @@ import io.github.haohaoo3o.tracklab.core.geo.Vec2
 import io.github.haohaoo3o.tracklab.core.model.TrackSample
 
 /**
- * 轨迹生成管线（）：回放 + 导出共用同一 `List<TrackSample>`，单向管线：
+ * 轨迹生成管线：回放 + 导出共用同一 `List<TrackSample>`，单向管线：
  *
  * 1. [MotionClock] 等时推进（Δt=0.5s）：ds = v·Δt；
  * 2. [PaceProfile] / [CadenceProfile] 取值（各自子流 OU/EMA）；
  * 3. [LapPerturber] 求偏移 Δ̂_k(s)（平滑横向偏移 + 弯道/过渡段差异）；
  * 4. 点 = C(s) + Δ̂·N(s)；
  * 5. → WGS-84；
- * 6. [BoundaryGuard] 硬夹（防御性，；|Δ̂|<0.55<W ⇒ 真路线生成路径恒不触发钳制）；
- * 6b. [GnssObservationNoise] 输出覆盖（，第 2 轮增补；仅 [generateObserved]）：
+ * 6. [BoundaryGuard] 硬夹（防御性；|Δ̂|<1.2<W ⇒ 真路线生成路径恒不触发钳制）；
+ * 6b. [GnssObservationNoise] 输出覆盖（第 2 轮增补；仅 [generateObserved]）：
  *     观测 ENU = 真 ENU + n(t)，n 为 E/N 两路 OU+白噪声；不回灌 s 推进与配速字段；
  * 7. [TrackSample] 输出（恒等式 |pace − 1000/v| < 1e-9，无步幅字段）。
  *
- * 度量口径（）：距离/曲率界在最终序列度量；相邻样本距离界在生成（重采样）输出度量。
+ * 度量口径：距离/曲率界在最终序列度量；相邻样本距离界在生成（重采样）输出度量。
  *  适用域：既有真路线界（ step/curvature、 零越界）在 [generate] 输出下成立；
  * [generateObserved] 的观测序列适用  独立界（OBS_* 常量），真路线侧断言一字不动。
- * MetricResampler 仅预览/走廊显示，**不进本管线**（）。
+ * MetricResampler 仅预览/走廊显示，**不进本管线**。
  *
  * 输入校验（ 口径）：p_base ∈ [180, 660]、laps ∈ [1, 100]、seed 为任意 long（文本解析归 MapEditViewModel）。
  */
@@ -34,7 +34,8 @@ class TrajectoryGenerator {
      * @param model 六点拟合后的跑道几何（C(s)/N(s)/wrapArc/toWgs84）
      * @param laps 圈数（1–100）
      * @param pBase 基准配速 p_base（s/km，[180, 660]）
-     * @param seed 随机种子（子流 seed/seed+1/seed+2，F4）
+     * @param seed 随机种子（真路线子流 seed(+0)/seed+1/seed+2/seed+3/seed+4/seed+7 + 观测子流 seed+5/+6；
+     * pace 全局ν(+0)跑走档后由 run/walk OU(+3/+4)取代；观测 seed+5/+6 与跑走 +3/+4/+7 无冲突，见）
      * @throws IllegalArgumentException 参数越界（中文可读错误）
      */
     fun generate(model: TrackModel, laps: Int, pBase: Double, seed: Long): List<TrackSample> {
@@ -64,7 +65,7 @@ class TrajectoryGenerator {
 
             // ③ 逐圈偏移 Δ̂_k(s)（含弯道半径/过渡段差异 d_k·w(s)）
             val rawLateral = lapPerturber.offsetAt(lapIndex, lapArcS)
-            // ④ 点 = C(s) + Δ̂·N(s)；⑥ BoundaryGuard 防御性硬夹（，真路线恒不触发）
+            // ④ 点 = C(s) + Δ̂·N(s)；⑥ BoundaryGuard 防御性硬夹（真路线恒不触发）
             val lateral = BoundaryGuard.clampLateral(rawLateral, model.r)
             val enu = model.point(lapArcS) + model.normal(lapArcS) * lateral
             // ⑤ → WGS-84；⑦ TrackSample 输出
@@ -106,7 +107,8 @@ class TrajectoryGenerator {
      * @param model 六点拟合后的跑道几何
      * @param laps 圈数（1–100）
      * @param pBase 基准配速 p_base（s/km，[180, 660]）
-     * @param seed 随机种子（真路线子流 seed/seed+1/seed+2 + 观测子流 seed+5/+6，F4）
+     * @param seed 随机种子（真路线子流 seed(+0)/seed+1/seed+2/seed+3/seed+4/seed+7 + 观测子流 seed+5/+6；
+     * pace 全局ν(+0)跑走档后由 run/walk OU(+3/+4)取代；观测 seed+5/+6 与跑走 +3/+4/+7 无冲突，见）
      * @throws IllegalArgumentException 参数越界（中文可读错误）
      */
     fun generateObserved(model: TrackModel, laps: Int, pBase: Double, seed: Long): List<TrackSample> {

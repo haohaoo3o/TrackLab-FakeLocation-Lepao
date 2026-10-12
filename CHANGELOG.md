@@ -4,6 +4,31 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-12
+
+首个正式版：界面体系焕新为**单色（黑白灰）**设计语言，并对轨迹与配速的真实感做了一轮加强。
+
+### Added
+
+- 单色设计令牌体系（`values/tl_colors.xml` + `values-night/tl_colors.xml`）：浅/深两态各六档中性灰阶，
+  主强调色 = 黑（浅态）/ 白（深态）；主界面、悬浮窗与通知图标统一到灰阶，状态区分改由灰阶 + 图标 + 字重承担。
+- 跑走周期配速（`core/motion/PaceProfile`）：圈内弧长自变量的跑/走周期（跑 ×0.9、走 ×1.6，15m smoothstep 过渡，
+  相位每圈由种子派生），快慢各自独立 OU 抖动（子流 seed+3 / seed+4，相位流 seed+7）；配速仍收敛在 [180,660] s/km。
+- 界面层级重排：状态带 / 地图与 HUD 主舞台 / 全局传输条（开始·暂停·停止恒可见）/ 页内分区（跑道 · 更多 · 控制台）。
+- 悬浮窗重绘：折叠 64dp / 展开 120dp 两态、四格指标（圈/距离/配速/步频）、运行与暂停双态灰阶指示；不依赖跨窗模糊。
+
+### Changed
+
+- 横向扰动幅度加强（`core/motion/LapPerturber`）：软钳 0.55m → 1.6m、谐波振幅同步放大（≈4.4×），
+  逐圈随机性结构不变（AR(1)、7 个 nextGaussian/圈 消耗次序照旧）；走廊半宽 2.0m → 2.3m。
+- 曲率界与逐圈差异上界随扰动加强重标；观测层 J1 阈值与「观测 vs 真路线」改善比同步重标（回归值见测试附录）。
+- 常驻合规徽标改为黑底白字（浅态）/ 白底黑字（深态），保持最高对比与既有文案。
+
+### Notes
+
+- 观测噪声输出层默认启用等 0.5.0 行为不变；输入界限、导出格式与算法常量名无破坏性变更。
+- 签名与升级路径：同一发布证书持续签名，可直接覆盖升级。
+
 ## [0.3.0] - 2026-10-09
 
 mock 引导残留清除（本版此前误标为 `2.0.0`，现按语义化 0.x 线发布为 `0.3.0`）。
@@ -93,6 +118,7 @@ mock 引导残留清除（本版此前误标为 `2.0.0`，现按语义化 0.x �
 - Android 官方测试位置提供者输出、权限引导和暂停恢复。
 - JVM 单元测试与 Android 仪器测试。
 
-[Unreleased]: https://github.com/haohaoo3o/TrackLab-FakeLocation-Lepao/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/haohaoo3o/TrackLab-FakeLocation-Lepao/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/haohaoo3o/TrackLab-FakeLocation-Lepao/releases/tag/v1.0.0
 [0.2.0]: https://github.com/haohaoo3o/TrackLab-FakeLocation-Lepao/releases/tag/v0.2.0
 [0.1.0]: https://github.com/haohaoo3o/TrackLab-FakeLocation-Lepao/releases/tag/v0.1.0

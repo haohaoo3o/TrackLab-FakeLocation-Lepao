@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TrackLab 悬浮窗不透明卡片（单色化 2026-10-12）：
+     - 实底 #F2F2F2（= tl_surface，alpha=1.0，不透明），配 1dp 灰阶描边 #D9D9D9（= tl_line）；
+     - 顶部 6dp 白口沿保留（中性灰渐变）；圆角 18dp。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ① 不透明实底 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="#F2F2F2" />
+        </shape>
+    </item>
+    <!-- ② 顶部 6dp 白口沿（卡片上缘提亮，与描边合成双线口沿） -->
+    <item android:gravity="top" android:height="6dp">
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="18dp" android:topRightRadius="18dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#66FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- ③ 1dp 中性描边（亮底靠它定义边缘、暗底靠它读作棱线） -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="#D9D9D9" />
+        </shape>
+    </item>
+</layer-list>

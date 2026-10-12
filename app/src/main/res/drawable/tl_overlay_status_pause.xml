@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 悬浮窗状态点·已暂停（单色化 2026-10-12）：14dp 中灰圆环 + 8dp 中灰半实点（空心形态差）。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="14dp" android:height="14dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke android:width="1dp" android:color="#767676" />
+        </shape>
+    </item>
+    <item android:gravity="center">
+        <shape android:shape="oval">
+            <size android:width="8dp" android:height="8dp" />
+            <solid android:color="#767676" />
+        </shape>
+    </item>
+</layer-list>

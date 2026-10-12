@@ -25,13 +25,14 @@ import io.github.haohaoo3o.tracklab.ui.motion.ReducedMotion
 import kotlin.math.roundToInt
 
 /**
- * 可拖动悬浮窗 HUD（F6 ⑥ / 工程契约 、设计资产 ）：
- * TrackLab v2 **玻璃 HUD**——① 跨窗高斯模糊（API 31+ 且系统允许时给窗口开
- * `FLAG_BLUR_BEHIND` + `setBlurBehindRadius`）**默认关闭**（开关 [BLUR_BEHIND_ENABLED]；
- * 真机实证它在 MIUI 上让整屏发虚，见该常量注释与类尾）；② 玻璃底**单套** `v2_glass_hud`
- * （实底 alpha 199/255 = 0.7804 + 自上而下轻遮罩，真的透底）；③ 发丝双描边与顶部 12dp 高光。
+ * 可拖动悬浮窗 HUD（F6 ⑥ / docs/CONTRACTS.md）：TrackLab **浅色纸面卡**（2026-10-12 焕新，
+ * 原创外观）——① 不透明浅色实底 `tl_overlay_card`（不依赖跨窗模糊，在任何背景上都是同一套
+ * 完整外观）；② 中性描边 + 顶部白口沿；③ 展开态四格浅色芯片（圈 / 距离 / 配速 / 步频全量）；
+ * ④ 赭色合规标记格；⑤ 运行绿 / 琥珀双色状态点（主行内，随暂停态换件）。
  * 展示指标（**主行 = 圈 + 距离**〔宽度实算见 `setMetricsOnMainThread`〕，**第二行 4 格 = 圈 /
  * 距离 / 配速 / 步频全量**）+ 暂停/继续 + 停止 + 折叠。
+ * 折叠态（64dp）= 主行 48dp：抓手 + 状态点 + 核心指标 + 合规标记 + 暂停/停止/折叠三键；
+ * 展开态（120dp）= 主行 + 8dp gap + 指标行 48dp。
  *
  * - 悬浮窗权限（SYSTEM_ALERT_WINDOW）**手工授予**（Settings.ACTION_MANAGE_OVERLAY_PERMISSION），
  *   未授予时 [show] 返回 false——静默跳过 HUD（通知与主界面仍在），如实记录 notCovered；
@@ -51,7 +52,7 @@ import kotlin.math.roundToInt
  *   只在 `(mAttrs.flags & FLAG_BLUR_BEHIND) != 0 && mBlurController.getBlurEnabled()` 时成立，
  *   该常量在 API 35 stub 中**未标 @Deprecated**——`javap -v` 实测）；
  *   不可用（**开关关闭（出厂默认）** / 低版本 / 系统关模糊 / OEM 无 GPU 支持 / addView 被拒）
- *   一律**静默走无模糊外观**——玻璃底是**同一套完整外观**（20dp 圆角 + 顶部高光 + 双发丝），
+ *   一律**静默走不透明纸面外观**——纸面卡是**同一套完整外观**（18dp 圆角 + 顶部口沿 + 中性描边），
  *   不是"关掉模糊的裸框"，且绝不抛异常；
  * - 拖动：按住 HUD 主体（指标区/空白）拖动整窗，落点经 [OverlayGeometry.clampWindowPosition]
  *   钳回视口（含 margin）；按钮点击不触发拖动（touch slop 判别）；
@@ -330,28 +331,22 @@ class FloatingOverlayController(
         pauseButton?.setText(if (paused) R.string.action_resume else R.string.action_pause)
         pauseButton?.contentDescription =
             context.getString(if (paused) R.string.cd_overlay_resume else R.string.cd_overlay_pause)
-        // 状态变色（DESIGN  白名单内）：指标行 primary / warning；
-        // 网格首格（圈）success / warning；其余格 primary / secondary；LED 换件 play / pause。
+        // 单色（黑白灰）配色（2026-10-12 单色化；PAUSED 二值切换）：
+        // 指标行 运行 #111111 / 暂停 #767676；网格首格（圈）同；其余格 运行 #111111 / 暂停 #5A5A5A；
+        // 状态点换件 tl_overlay_status_play（黑实心）/ tl_overlay_status_pause（中灰）；暂停键图标 tint 同指标行色。
         // 悬浮窗只拿得到 paused 二值（服务的 update(ui) 传 ui.state == PAUSED，PlaybackForegroundService:481），
-        // 且停止/完成时服务已 hide()（:589）——故"停止态配色"（v2_led_stop / text_secondary）只用于
-        // 不显示的场景，不在此处伪造第三态。
-        metricsView?.setTextColor(
-            context.getColor(if (paused) R.color.matrix_warning else R.color.matrix_text_primary),
+        // 且停止/完成时服务已 hide()（:589）——故不伪造第三态。
+        val mainColor = if (paused) PAUSED_GRAY else INK_MAIN
+        val subColor = if (paused) INK_SUB else INK_MAIN
+        metricsView?.setTextColor(mainColor)
+        ledView?.setBackgroundResource(
+            if (paused) R.drawable.tl_overlay_status_pause else R.drawable.tl_overlay_status_play,
         )
-        ledView?.setBackgroundResource(if (paused) R.drawable.v2_led_pause else R.drawable.v2_led_play)
-        pauseButton?.setCompoundDrawableTintList(
-            ColorStateList.valueOf(
-                context.getColor(if (paused) R.color.matrix_warning else R.color.matrix_text_primary),
-            ),
-        )
-        gridCircle?.setTextColor(
-            context.getColor(if (paused) R.color.matrix_warning else R.color.matrix_success),
-        )
-        val otherCellColor =
-            context.getColor(if (paused) R.color.matrix_text_secondary else R.color.matrix_text_primary)
-        gridDistance?.setTextColor(otherCellColor)
-        gridPace?.setTextColor(otherCellColor)
-        gridCadence?.setTextColor(otherCellColor)
+        pauseButton?.setCompoundDrawableTintList(ColorStateList.valueOf(mainColor))
+        gridCircle?.setTextColor(mainColor)
+        gridDistance?.setTextColor(subColor)
+        gridPace?.setTextColor(subColor)
+        gridCadence?.setTextColor(subColor)
         applyBreathOnMainThread(paused)
     }
 
@@ -382,9 +377,7 @@ class FloatingOverlayController(
             if (expanded) R.string.matrix_overlay_fold else R.string.matrix_overlay_expand,
         )
         // 显式重上色：换件是运行期行为，不依赖框架"新 drawable 是否继承 XML drawableTint"的实现细节。
-        foldButton?.setCompoundDrawableTintList(
-            ColorStateList.valueOf(context.getColor(R.color.matrix_text_primary)),
-        )
+        foldButton?.setCompoundDrawableTintList(ColorStateList.valueOf(INK_MAIN))
         val wrap = gridWrap ?: return
         foldAnimator?.cancel()
         foldAnimator = null
@@ -610,17 +603,14 @@ class FloatingOverlayController(
     }
 
     /**
-     * 模糊层 + 玻璃底。
+     * 浅色纸面底（只被 [showOnMainThread] 与其中同函数的回退分支调用）。
      *
-     * **单套玻璃**（2026-10-10 真机修复）：平台模糊默认关闭（[BLUR_BEHIND_ENABLED] = false）后，
-     * "模糊可用态"与"回退态"两套外观已无区分意义，故合并为一套 `v2_glass_hud`
-     * （实底 alpha 0.7804 + 顶部轻遮罩 + 12dp 白高光 + 双发丝）；`v2_glass_hud_fallback.xml`
-     * 及其颜色/别名一并删除（grep 全仓无引用）。
+     * 外观是**不透明浅色卡片** `tl_overlay_card`（实底 alpha=1.0，自带 1dp 描边 + 顶部口沿）：
+     * 出厂默认不依赖跨窗模糊（[BLUR_BEHIND_ENABLED] = false），底件在两条分支上都**同一件**。
+     * 模糊窗口属性仍按原路径申请/清理（开关翻回 true 即恢复完整路径，能力探测一直在位），
+     * 但外观不再随它切换——不存在"关掉模糊的裸框"。
      *
-     * 模糊分支（仅当开关为 true 且平台确认支持）：`FLAG_BLUR_BEHIND` + `setBlurBehindRadius(px)`；
-     * 其余情况一律清掉标志与半径（二者必须同生同灭——重挂路径复用同一个 params 对象）。
-     * 半径 = 10dp 换算 px 后钳在 [16, 40]（上限 40px 控 GPU 合成开销，DESIGN ）;
-     * 底件在两条分支上都**同一件**（不再切换 drawable）。
+     * 半径 = 10dp 换算 px 后钳在 [16, 40]（上限 40px 控 GPU 合成开销）。
      * `Build.VERSION.SDK_INT >= S` 的判据在此**词法支配**平台调用（lint NewApi 要求；
      * 上游 useBlur 已由 [crossWindowBlurEnabledOnMainThread] 在 API 31+ 上确认，此处是双保险）。
      */
@@ -642,8 +632,8 @@ class FloatingOverlayController(
                 params.setBlurBehindRadius(0)
             }
         }
-        // 单套玻璃：两条分支同件（合并原因见本函数 KDoc 与类头）。
-        view.setBackgroundResource(R.drawable.v2_glass_hud)
+        // 浅色纸面卡：两条分支同件（合并原因见本函数 KDoc 与类头）。
+        view.setBackgroundResource(R.drawable.tl_overlay_card)
     }
 
     /**
@@ -734,6 +724,16 @@ class FloatingOverlayController(
 
         /** 指标串格分隔符（与 `overlay_metrics_format` 的 `·` 同源）。 */
         private const val METRIC_CELL_SEPARATOR = "·"
+
+        /**
+         * 单色（黑白灰）调色板（2026-10-12 单色化，与 view_floating_control.xml 硬编码同源）：
+         * 墨 #111111（主文字/图标/运行态）/ 次墨 #5A5A5A（暂停态其余格）/
+         * 运行态 = INK_MAIN（与主行同色）/ 暂停态主色 #767676（中灰 + 空心点 + 呼吸）。
+         */
+        private const val INK_MAIN = -0xEEEEEF
+        private const val INK_SUB = -0xA5A5A6
+        private const val RUN_GRAY = -0xEEEEEF
+        private const val PAUSED_GRAY = -0x89898A
 
         /** 主行 join 回原观感用的带空格分隔符（`overlay_metrics_format` 即「 · 」）。 */
         private const val METRIC_CELL_SEPARATOR_SPACED = " · "

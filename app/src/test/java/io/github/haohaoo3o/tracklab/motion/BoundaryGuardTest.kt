@@ -14,27 +14,27 @@ import org.junit.Test
 import kotlin.math.abs
 
 /**
- * 断言契约（防御性钳制 W=min(1.75m, 0.3R)；生成路径『零越界』
- * 不变量断言 + 构造越界点直测钳制函数）。
+ * 断言契约见 docs/CONTRACTS.md（F5：防御性钳制 W=min(2.0m, 0.3R)；生成路径『零越界』
+ * 不变量断言 + 构造越界点直测钳制函数）。填充人：motion 阶段。
  *
- * 覆盖：W=min(1.75, 0.3R) 公式、边界谓词（|t|≤W 含端点）、构造越界残差点直测 clampLateral 钳到边界、
+ * 覆盖：W=min(2.0, 0.3R) 公式、边界谓词（|t|≤W 含端点）、构造越界残差点直测 clampLateral 钳到边界、
  * 退化输入、生成序列『零越界/零点被钳』防御性不变量（标准试样 seed=42 全序列残差在走廊内且与
  * Δ̂ 逐点一致 ⇒ 硬夹恒为恒等映射）。
  */
 class BoundaryGuardTest {
 
-    // ---------------------------------------------------------------- W = min(1.75m, 0.3R)
+    // ---------------------------------------------------------------- W = min(2.0m, 0.3R)
 
     @Test
     fun halfWidthIsMinOfPinnedConstantAndRelativeRadius() {
-        assertEquals("标准试样 R=36.5：0.3R=10.95 ⇒ W=1.75", 1.75, BoundaryGuard.halfWidth(STD_R), 1e-12)
+        assertEquals("标准试样 R=36.5：0.3R=10.95 ⇒ W=2.3", 2.3, BoundaryGuard.halfWidth(STD_R), 1e-12)
         assertEquals("小半径 R=5.5：W=0.3R", 1.65, BoundaryGuard.halfWidth(5.5), 1e-12)
         assertEquals("R=5.0+：W=0.3R", 0.3 * 5.01, BoundaryGuard.halfWidth(5.01), 1e-12)
-        assertEquals("R=20：W=1.75", MotionContracts.BOUNDARY_W_MAX_M, BoundaryGuard.halfWidth(20.0), 1e-12)
+        assertEquals("R=20：W=2.3", MotionContracts.BOUNDARY_W_MAX_M, BoundaryGuard.halfWidth(20.0), 1e-12)
         for (r in listOf(5.01, 5.5, 6.0, 8.0, 36.5, 100.0)) {
             val w = BoundaryGuard.halfWidth(r)
-            assertTrue("W=$w ≤ 1.75（R=$r）", w <= MotionContracts.BOUNDARY_W_MAX_M + 1e-12)
-            assertEquals("W=min(1.75, 0.3R)（R=$r）",
+            assertTrue("W=$w ≤ 2.0（R=$r）", w <= MotionContracts.BOUNDARY_W_MAX_M + 1e-12)
+            assertEquals("W=min(2.0, 0.3R)（R=$r）",
                 minOf(MotionContracts.BOUNDARY_W_MAX_M, MotionContracts.BOUNDARY_W_REL_R * r), w, 1e-12)
         }
     }
@@ -63,7 +63,7 @@ class BoundaryGuardTest {
                 assertTrue("钳后必在走廊内", BoundaryGuard.isWithinBoundary(clamped, r))
             }
             // 走廊内的残差点保持不变
-            for (t in listOf(0.0, 0.55, -0.55, w, -w, w / 2, -w / 2)) {
+            for (t in listOf(0.0, 1.2, -1.2, w, -w, w / 2, -w / 2)) {
                 assertEquals("t=$t R=$r：走廊内恒等", t, BoundaryGuard.clampLateral(t, r), 0.0)
             }
         }

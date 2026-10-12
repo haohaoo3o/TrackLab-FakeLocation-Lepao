@@ -12,13 +12,13 @@ import java.util.Random
 import kotlin.math.abs
 
 /**
- * 断言契约（c∈[150,200]、|Δc|≤4.0、|v−v̄|≤0.8 EMA τ=10s、
+ * 断言契约见 docs/CONTRACTS.md（c∈[150,200]、|Δc|≤4.0、|v−v̄|≤1.6 EMA τ=10s（跑走周期档）、
  * 步幅包络 S∈[0.45,2.25] 与 |S−(0.9+0.15v)|≤0.65、恒等式 |v−S·c/60|<1e-9 与 |pace−1000/v|<1e-9；
  * |Δc| 推导为内层夹紧导数形式）。
  *
  * 覆盖：范围（c∈[150,200] 严格步频界，含极值速度扫掠）、连续性（|Δc|≤4.0 spm/500ms 步）、
- * EMA 不变量（|v−v̄|≤0.8）、步幅包络与恒等式、可复现性（同 seed 一致 / 不同 seed 有差异 /
- *  公式独立复算逐点一致）。
+ * EMA 不变量（|v−v̄|≤1.6，跑走周期档）、步幅包络与恒等式、可复现性（同 seed 一致 / 不同 seed 有差异 /
+ * 公式独立复算逐点一致）。
  */
 class CadenceProfileTest {
 
@@ -57,7 +57,7 @@ class CadenceProfileTest {
 
             // 范围：c ∈ [150, 200]（严格步频界）
             assertTrue("i=$i：c=$c ∈ [150, 200]", c >= MotionContracts.CADENCE_MIN_SPM && c <= MotionContracts.CADENCE_MAX_SPM)
-            // EMA 不变量：|v − v̄| ≤ 0.8
+            // EMA 不变量：|v − v̄| ≤ 1.6（跑走周期档）
             assertTrue("i=$i：|v−v̄|=${abs(v - vBar)} ≤ ${MotionContracts.SPEED_EMA_MAX_GAP_MPS}",
                 abs(v - vBar) <= MotionContracts.SPEED_EMA_MAX_GAP_MPS)
             // 步幅包络：S ∈ [0.45, 2.25] 且 |S − (0.9+0.15v)| ≤ 0.65
@@ -94,7 +94,7 @@ class CadenceProfileTest {
                 assertTrue("v=$v i=$i：S=$s ∈ [0.45, 2.25]", s >= MotionContracts.STRIDE_MIN_M && s <= MotionContracts.STRIDE_MAX_M)
                 val ref = MotionContracts.STRIDE_REF_A_M + MotionContracts.STRIDE_REF_B_SEC * v
                 assertTrue("v=$v i=$i：|S−(0.9+0.15v)| ≤ 0.65", abs(s - ref) <= MotionContracts.STRIDE_REF_MAX_DEV_M)
-                assertTrue("v=$v i=$i：|v−v̄| ≤ 0.8", abs(v - step.speedEmaMps) <= MotionContracts.SPEED_EMA_MAX_GAP_MPS)
+                assertTrue("v=$v i=$i：|v−v̄| ≤ 1.6", abs(v - step.speedEmaMps) <= MotionContracts.SPEED_EMA_MAX_GAP_MPS)
                 assertTrue("v=$v i=$i：恒等式 |v − S·c/60| < 1e-9", CadenceProfile.identityHolds(v, c, s))
                 val prev = prevC
                 if (prev != null) {
