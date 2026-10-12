@@ -454,4 +454,54 @@ class MapEditViewModelTest {
             return slots.map { ltp.toLla2(it) }
         }
     }
+
+    @Test
+    fun defaultRouteCallsGenerateObserved() {
+        // 接线后结构性断言：默认链路 generateSamples() 的输出必须等于 TrajectoryGenerator
+        // .generateObserved（观测序列）同参输出——回放与导出同经该单点，同源交付。
+        // generate() 真路线函数保留，其覆盖由 TrajectoryGeneratorTest /
+        // GnssObservationNoiseTest.trueRouteInvariantsUnchanged 继续承载（）。
+        val pts = idealPoints()
+        val vm = newViewModel().apply {
+            pts.forEach { addPoint(it) }
+            applyInputs("330", "1", "42")
+        }
+        val got = vm.generateSamples()!!
+        val fit = vm.tryFit() as MapEditViewModel.FitPreview.Ready
+        val expect = TrajectoryGenerator().generateObserved(fit.model, 1, 330.0, 42L)
+        assertEquals("默认路由输出规模=观测序列", expect.size, got.size)
+        assertEquals("默认路由输出逐点=观测序列", expect, got)
+    }
+    @Test
+    fun productionRouteCarriesObservationNoise() {
+        // 生产链路证伪用例（非 generateObserved 自身单测）：生产入口 vm.generateSamples()
+        // 的输出坐标逐点 ≠ generate 真路线输出（噪声确已进交付帧），而规划字段
+        // （elapsedMs/speed/pace/cadence）逐点 == 真路线（n 不回灌推进与配速字段）。
+        val pts = idealPoints()
+        val vm = newViewModel().apply {
+            pts.forEach { addPoint(it) }
+            applyInputs("330", "1", "42")
+        }
+        val got = vm.generateSamples()!!
+        val fit = vm.tryFit() as MapEditViewModel.FitPreview.Ready
+        val gen = TrajectoryGenerator()
+        val truth = gen.generate(fit.model, 1, 330.0, 42L)
+        val observed = gen.generateObserved(fit.model, 1, 330.0, 42L)
+        assertEquals("生产链路输出规模=观测序列", observed.size, got.size)
+        assertEquals("生产链路输出逐点=观测序列", observed, got)
+        assertEquals("生产链路输出规模=真路线", truth.size, got.size)
+        var coordDiff = 0
+        for (i in got.indices) {
+            // 噪声确已进交付帧：至少部分样本坐标逐点 ≠ 真路线
+            if (got[i].latitudeDeg != truth[i].latitudeDeg ||
+                got[i].longitudeDeg != truth[i].longitudeDeg
+            ) coordDiff++
+            // 规划字段不受 n 影响：逐点 == 真路线
+            assertEquals("i=$i elapsedMs 与真路线一致", truth[i].elapsedMs, got[i].elapsedMs)
+            assertEquals("i=$i speed 与真路线一致", truth[i].speedMps, got[i].speedMps, 0.0)
+            assertEquals("i=$i pace 与真路线一致", truth[i].paceSecPerKm, got[i].paceSecPerKm, 0.0)
+            assertEquals("i=$i cadence 与真路线一致", truth[i].cadenceSpm, got[i].cadenceSpm, 0.0)
+        }
+        assertTrue("生产链路坐标逐点≠真路线（coordDiff=$coordDiff/${got.size}）", coordDiff > 0)
+    }
 }

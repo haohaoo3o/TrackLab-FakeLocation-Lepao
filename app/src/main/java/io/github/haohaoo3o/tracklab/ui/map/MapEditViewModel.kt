@@ -214,11 +214,13 @@ class MapEditViewModel(
 
     /**
      * 用当前 6 点 + 参数生成轨迹样本（WGS-84；回放与导出共用同一序列）。
+     * 默认即"观测序列"（TrajectoryGenerator.generateObserved 输出覆盖层：真实路线 + GNSS 接收机噪声）；
+     * 无开关、无关闭回退路径，规划字段（配速/步频/时刻）不含噪声。
      * 拟合未完成/被拒返回 null。
      */
     fun generateSamples(): List<TrackSample>? {
         val model = (tryFit() as? FitPreview.Ready)?.model ?: return null
-        return generator.generate(model, current.laps, current.pBaseSecPerKm.toDouble(), current.seed)
+        return generator.generateObserved(model, current.laps, current.pBaseSecPerKm.toDouble(), current.seed)
     }
 
     /** GPX 导出文本（[GpxExporter]，导出保序口径）；无法生成返回 null。*/

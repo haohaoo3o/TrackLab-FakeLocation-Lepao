@@ -302,4 +302,29 @@ class TrajectoryGeneratorTest {
         private const val STD_A = 42.5
         private const val STD_R = 36.5
     }
-}
+
+    // ----------------------------------------------------------------  生产默认入口断言（接线后）
+
+    @Test
+    fun defaultProductionPathUsesObservedGenerate() {
+        // generateObserved 为生产默认入口（TrajectoryGenerator.kt；MapEditViewModel.generateSamples
+        // 唯一生产调用点调本入口，回放与导出同源）。
+        // 本断言锁死 generateObserved 的输入校验与 generate 同口径（越界同拒），
+        // 默认路由本身由 MapEditViewModelTest.defaultRouteCallsGenerateObserved 真值断言锁死。
+        val model = stdModel()
+        val gen = TrajectoryGenerator()
+        for (laps in listOf(0, 101)) {
+            try {
+                gen.generateObserved(model, laps, 330.0, 42L)
+                throw AssertionError("期望 IllegalArgumentException（laps=" + laps + "）")
+            } catch (e: IllegalArgumentException) {
+                assertTrue("中文可读错误：" + e.message, e.message!!.contains("laps"))
+            }
+        }
+        try {
+            gen.generateObserved(model, 3, 100.0, 42L)
+            throw AssertionError("期望 IllegalArgumentException（p_base=100）")
+        } catch (e: IllegalArgumentException) {
+            assertTrue("中文可读错误：" + e.message, e.message!!.contains("p_base"))
+        }
+    }}

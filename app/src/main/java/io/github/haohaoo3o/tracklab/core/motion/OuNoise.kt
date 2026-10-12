@@ -4,11 +4,12 @@ import java.util.Random
 import kotlin.math.sqrt
 
 /**
- * OU（Ornstein–Uhlenbeck）噪声离散化（递推式钉死）。
- * PaceProfile（ν）与 CadenceProfile（η）共用；随机源一律 [java.util.Random]（非 kotlin.random.Random）。
+ * OU（Ornstein–Uhlenbeck）噪声离散化（，B4 钉死递推式）。
+ * PaceProfile（ν）与 CadenceProfile（η）共用；随机源一律 [java.util.Random]（非 kotlin.random.Random，F4）。
  *
- * 结点间隔 Δ=[MotionContracts.OU_NODE_INTERVAL_SEC]=1.0s=2·Δt，结点间**线性插值**；结点值递推
- * （g_k = [Random.nextGaussian]，ρ=[MotionContracts.OU_RHO]）：
+ * 结点间隔 Δ（默认 [MotionContracts.OU_NODE_INTERVAL_SEC]=1.0s=2·Δt；观测层由
+ * [MotionContracts.OBS_NODE_INTERVAL_SEC] 驱动，两者数值同款），结点间**线性插值**；结点值递推
+ * （g_k = [Random.nextGaussian]，ρ 默认 [MotionContracts.OU_RHO]，观测层由 OBS_θ/Δ 导出值驱动）：
  *
  * ```
  * x_0     = clamp(σ·g_0, ±x_max)
@@ -20,7 +21,7 @@ import kotlin.math.sqrt
  * 消耗次序（钉死）：g_k 按结点序号 k=0,1,2,… 单调消耗；取值器内部维护结点序列 [x_k, x_{k+1}] 窗口，
  * 跨窗即按序消耗下一个 g——**同 seed 任意查询次序下逐点可复现**。
  *
- * 连续性推论：相邻结点 |x_{k+1}−x_k| ≤ δ_max ⇒ 线性插值下任意 500ms 步 |Δν| ≤ 0.5·δ_max
+ * 连续性推论（）：相邻结点 |x_{k+1}−x_k| ≤ δ_max ⇒ 线性插值下任意 500ms 步 |Δν| ≤ 0.5·δ_max
  * （含跨结点窗；Pace ⇒ 0.01、Cadence ⇒ 0.5spm）。
  */
 internal class OuNoise(
@@ -28,6 +29,10 @@ internal class OuNoise(
     private val sigma: Double,
     private val deltaMax: Double,
     private val xMax: Double,
+    /** 结点间隔 Δ（秒；默认  钉死值；观测层传 OBS_NODE_INTERVAL_SEC，同款 1.0s）。 */
+    private val intervalSec: Double = MotionContracts.OU_NODE_INTERVAL_SEC,
+    /** 离散化系数 ρ（默认  钉死值；观测层传 OBS_RHO，同款 e^{−0.3}）。 */
+    private val rho: Double = MotionContracts.OU_RHO,
 ) {
 
     /** 已消耗的结点值 x_0..x_m（按下标单调延长，保证 g 消耗次序钉死）。 */
@@ -41,11 +46,11 @@ internal class OuNoise(
         nodes.add(clamp(sigma * random.nextGaussian()))
     }
 
-    /** 噪声在时刻 [tSec]（秒）的取值 ν(t)（结点间线性插值）。*/
+    /** 噪声在时刻 [tSec]（秒）的取值 ν(t)（结点间线性插值，）。 */
     fun value(tSec: Double): Double {
         require(tSec >= 0.0) { "OU 噪声时间必须非负（t=$tSec）" }
-        val k = Math.floor(tSec / MotionContracts.OU_NODE_INTERVAL_SEC).toLong()
-        val frac = (tSec - k * MotionContracts.OU_NODE_INTERVAL_SEC) / MotionContracts.OU_NODE_INTERVAL_SEC
+        val k = Math.floor(tSec / intervalSec).toLong()
+        val frac = (tSec - k * intervalSec) / intervalSec
         ensure(k + 1)
         val xk = nodes[k.toInt()]
         val xk1 = nodes[k.toInt() + 1]
@@ -64,8 +69,8 @@ internal class OuNoise(
         while (nodes.size <= index) {
             val xk = nodes[nodes.size - 1]
             val g = random.nextGaussian()
-            val raw = MotionContracts.OU_RHO * xk +
-                sigma * sqrt(1.0 - MotionContracts.OU_RHO * MotionContracts.OU_RHO) * g
+            val raw = rho * xk +
+                sigma * sqrt(1.0 - rho * rho) * g
             // x_{k+1} = clamp(x_k + clamp(raw_{k+1} − x_k, ±δ_max), ±x_max)
             val step = (raw - xk).coerceIn(-deltaMax, deltaMax)
             nodes.add(clamp(xk + step))

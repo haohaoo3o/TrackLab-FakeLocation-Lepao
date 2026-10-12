@@ -1,6 +1,6 @@
 # TrackLab
 
-TrackLab 是一个面向 Android 的开源跑道轨迹生成、地图预览与模拟定位测试工具。它根据六个跑道控制点拟合标准跑道几何，生成具有配速、步频和逐圈扰动的可复现轨迹，并支持应用内回放以及通过 Android 官方测试位置提供者输出模拟位置。
+TrackLab 是一个面向 Android 的开源跑道轨迹生成、地图预览与模拟定位测试工具。它根据六个跑道控制点拟合标准跑道几何，生成具有配速、步频和逐圈扰动的可复现轨迹；默认输出为「观测序列」（真实路线叠加 GNSS 接收机噪声模型），并支持应用内回放以及通过 Android 官方测试位置提供者输出模拟位置。
 
 [English summary](#english-summary)
 
@@ -11,6 +11,7 @@ TrackLab 是一个面向 Android 的开源跑道轨迹生成、地图预览与�
 - 六点编号 Marker 可拖动微调，拟合校验不放宽
 - 固定随机种子的可复现轨迹生成
 - 配速、步频、起步、弯道与停步特征模拟
+- GNSS 接收机观测噪声输出层（真实路线 + 相关/白噪声模型，默认经生产链路交付，同 seed 逐点可复现）
 - GPX 与 GeoJSON 位置数据导出
 - 高德地图、定位与搜索 SDK 集成
 - 应用内地图回放与前台服务控制
@@ -127,7 +128,7 @@ TrackLab 项目本身不运营服务器。配置、授权状态和回放快照�
 
 ## English summary
 
-TrackLab is an open-source Android tool for fitting a running track from six ordered control points, generating reproducible motion samples, previewing/exporting routes, and testing location-aware apps through Android's official Mock Location mechanism.
+TrackLab is an open-source Android tool for fitting a running track from six ordered control points, generating reproducible motion samples, adding a GNSS receiver-observation noise model by default, previewing/exporting routes, and testing location-aware apps through Android's official Mock Location mechanism.
 
 - Application ID: `io.github.haohaoo3o.tracklab`
 - Minimum Android version: Android 8.0 / API 26
